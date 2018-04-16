@@ -7,9 +7,9 @@
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% function varargout = averageHistogram(colorSpace)
+function varargout = averageHistogram(colorSpace)
 
-colorSpace = 'RGB';
+% colorSpace = 'RGB';
 % colorSpace = 'HSV';
 % colorSpace = 'YIQ';
 % colorSpace = 'YCbCr';
@@ -111,7 +111,8 @@ colorSpace = 'RGB';
             zlabel('Color Component (b)');
         end
         saveas(gcf,'../../Output/Part0/G_hist.jpg');
-
+        
+        figure
         scatter3(redBuoy(:,1),redBuoy(:,2),redBuoy(:,3),'.')
         title('Color Distribubtion for Red Buoy');
         if strcmp(colorSpace,'RGB')
@@ -136,7 +137,8 @@ colorSpace = 'RGB';
             zlabel('Color Component (b)');
         end
         saveas(gcf,'../../Output/Part0/R_hist.jpg');
-
+        
+        figure
         scatter3(yellowBuoy(:,1),yellowBuoy(:,2),yellowBuoy(:,3),'.')
         title('Color Distribubtion for Yellow Buoy');
         if strcmp(colorSpace,'RGB')
@@ -323,4 +325,4 @@ colorSpace = 'RGB';
 %         saveas(gcf,'../../Output/Part0/Y_hist (HSV).jpg')
 %     end
 
-% end
+end
