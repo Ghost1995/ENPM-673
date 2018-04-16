@@ -11,7 +11,7 @@ function cropImages
 
     imageFolder = '.\P1_submission\ColorSeg\Images\TrainingSet\Frames\';
     imgFiles = dir([imageFolder '*.jpg']);
-    for i = 11:length(imgFiles)
+    for i = 1:length(imgFiles)
         I = imread([imageFolder imgFiles(i).name]);
         I_y = roipoly(I);
         if ~isempty(I_y)
