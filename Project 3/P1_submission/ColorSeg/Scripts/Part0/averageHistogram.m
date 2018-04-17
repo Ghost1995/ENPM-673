@@ -85,7 +85,7 @@ function varargout = averageHistogram(colorSpace)
     end
     
     % Either save image or return the values of all colour buoys
-%     if nargout == 0
+    if nargout == 0
         figure
         scatter3(greenBuoy(:,1),greenBuoy(:,2),greenBuoy(:,3),'.')
         title('Color Distribubtion for Green Buoy');
@@ -163,15 +163,15 @@ function varargout = averageHistogram(colorSpace)
             zlabel('Color Component (b)');
         end
         saveas(gcf,'../../Output/Part0/Y_hist.jpg');
-%     elseif nargout > 1
-%         varargout{1} = greenBuoy;
-%         if nargout > 2
-%             varargout{2} = redBuoy;
-%             if nargout > 3
-%                 varargout{3} = yellowBuoy;
-%             end
-%         end
-%     end
+    else
+        varargout{1} = greenBuoy;
+        if nargout > 1
+            varargout{2} = redBuoy;
+            if nargout > 2
+                varargout{3} = yellowBuoy;
+            end
+        end
+    end
 
     
 %     % Initialize centers for the bar graphs

@@ -23,7 +23,7 @@
 %     greenMean = mean(greenHist(:,2));
 %     greenSigma = var(double(greenHist(:,2)));
     figure
-    plot(0:255,normpdf(0:255,greenMean,greenSigma))
+    plot([0:255],normpdf([0:255],greenMean,greenSigma))
     title('1-D Gaussian to Detect Green Buoy')
     xlabel('Intensity')
     ylabel('Probability')
@@ -34,7 +34,7 @@
 %     redMean = mean(redHist(:,1));
 %     redSigma = var(double(redHist(:,1)));
     figure
-    plot(0:255,normpdf(0:255,redMean,redSigma))
+    plot([0:255],normpdf([0:255],redMean,redSigma))
     title('1-D Gaussian to Detect Red Buoy')
     xlabel('Intensity')
     ylabel('Probability')
@@ -45,7 +45,7 @@
 %     yellowMean = mean(mean(yellowHist(:,1:2),2));
 %     yellowSigma = var(mean(yellowHist(:,1:2),2));
     figure
-    plot(0:255,normpdf(0:255,yellowMean,yellowSigma))
+    plot([0:255],normpdf([0:255],yellowMean,yellowSigma))
     title('1-D Gaussian to Detect Yellow Buoy')
     xlabel('Intensity')
     ylabel('Probability')
@@ -208,38 +208,40 @@
                                             redLimit = true;
                                         else
                                             redInd = redNextInd;
-                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 500
-                                                redLimit = true;
-                                                yellowLimit = true;
-                                                continue;
-                                            end
+                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) > 500
                                         end
                                     end
-                                    if ~yellowLimit
-                                        yellowMaxArea = yellowNextMax;
-                                        yellowNextMax = 0;
-                                        yellowInd = yellowNextInd;
-                                        yellowNextInd = [];
-                                        for i = 1:length(yellowProperty)
-                                            if (yellowMaxArea > yellowProperty(i).Area)&&(yellowNextMax < yellowProperty(i).Area)
-                                                if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
-                                                    yellowNextMax = yellowProperty(i).Area;
-                                                    yellowNextInd = i;
+                                    if abs(redProperty(redNextInd).Area - yellowProperty(yellowNextInd).Area) > 500
+                                        if ~yellowLimit
+                                            yellowMaxArea = yellowNextMax;
+                                            yellowNextMax = 0;
+                                            yellowInd = yellowNextInd;
+                                            yellowNextInd = [];
+                                            for i = 1:length(yellowProperty)
+                                                if (yellowMaxArea > yellowProperty(i).Area)&&(yellowNextMax < yellowProperty(i).Area)
+                                                    if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
+                                                        yellowNextMax = yellowProperty(i).Area;
+                                                        yellowNextInd = i;
+                                                    end
                                                 end
                                             end
-                                        end
-                                        if isempty(yellowNextInd)
-                                            yellowLimit = true;
-                                        else
-                                            yellowInd = yellowNextInd;
-                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 500
-                                                redLimit = true;
+                                            if isempty(yellowNextInd)
                                                 yellowLimit = true;
-                                                continue;
+                                                yellowNextIndex = yellowInd;
                                             end
                                         end
+                                        if abs(redProperty(redNextInd).Area - yellowProperty(yellowNextInd).Area) < 500
+                                            redInd = redNextInd;
+                                            yellowInd = yellowNextInd;
+                                            break;
+                                        end
+                                    else
+                                        redLimit = true;
+                                        yellowLimit = true;
                                     end
                                 end
+%                                 redInd = redNextInd;
+%                                 yellowInd = yellowNextInd;
                             else
                                 redInd = [];
                                 yellowInd = [];
