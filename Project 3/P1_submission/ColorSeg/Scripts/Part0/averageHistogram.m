@@ -1,20 +1,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This code computes average histogram for individual colors
+% This code computes average histogram for individual colors or gives color
+% distribution as output
 % 
 % Input:
-%   imageFolder --> Location of the cropped images of the buoy
+%   colorSpace --> Color space to be used
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function varargout = averageHistogram(colorSpace)
-
-% colorSpace = 'RGB';
-% colorSpace = 'HSV';
-% colorSpace = 'YIQ';
-% colorSpace = 'YCbCr';
-% colorSpace = 'Lab';
-
 
     % Define the folder of training set
     trainFolder = '..\..\Images\TrainingSet\Frames\';
