@@ -1,0 +1,19 @@
+% Define the folder of training set
+trainFolder = '..\..\Images\TrainingSet\Frames\';
+% Read all training image names
+trainFiles = dir([trainFolder '*.jpg']);
+    
+% Define the folder of testing set
+testFolder = '..\..\Images\TestSet\Frames\';
+% Read all training image names
+testFiles = dir([testFolder '*.jpg']);
+
+% Segment training data
+for i = 4%1:length(trainFiles)
+    segment1D([trainFolder trainFiles(i).name]);
+end
+
+% Segment testing data
+for i = [7,8,15,18,20,24,25,27,2]%1:length(testFiles)
+    segment1D([testFolder testFiles(i).name]);
+end

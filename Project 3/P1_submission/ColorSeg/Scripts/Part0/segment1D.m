@@ -2,27 +2,24 @@
 % This code computes average histogram for individual colors
 % 
 % Input:
-%   imageFolder --> Location of the cropped images of the buoy
+%   Frame --> Location of the images of the buoy
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% function varargout = segment1D(img)
+function segment1D(Frame)
 
-    % Define the folder of cropped buoys
-    imageFolder = '..\..\Images\TrainingSet\Frames\';
-    
-    % Read image names
-    imgFiles = dir([imageFolder '*.jpg']);
+%     % Define the folder of cropped buoys
+%     imageFolder = '..\..\Images\TrainingSet\Frames\';
+%     
+%     % Read image names
+%     imgFiles = dir([imageFolder '*.jpg']);
     
     % Compute average color histogram for all images
     [greenHist,redHist,yellowHist] = averageHistogram('RGB');
     
     % Generate 1-D gaussian for green buoy
     [greenMean,greenSigma] = normfit(greenHist(:,2));
-%     greenMean = mean(greenHist(:,2));
-%     greenSigma = var(double(greenHist(:,2)));
-    figure
     plot(0:255,normpdf(0:255,greenMean,greenSigma))
     title('1-D Gaussian to Detect Green Buoy')
     xlabel('Intensity')
@@ -31,9 +28,6 @@
     
     % Generate 1-D gaussian for red buoy
     [redMean,redSigma] = normfit(redHist(:,1));
-%     redMean = mean(redHist(:,1));
-%     redSigma = var(double(redHist(:,1)));
-    figure
     plot(0:255,normpdf(0:255,redMean,redSigma))
     title('1-D Gaussian to Detect Red Buoy')
     xlabel('Intensity')
@@ -42,34 +36,25 @@
     
     % Generate 1-D gaussian for yellow buoy
     [yellowMean,yellowSigma] = normfit(mean(yellowHist(:,1:2),2));
-%     yellowMean = mean(mean(yellowHist(:,1:2),2));
-%     yellowSigma = var(mean(yellowHist(:,1:2),2));
-    figure
     plot(0:255,normpdf(0:255,yellowMean,yellowSigma))
     title('1-D Gaussian to Detect Yellow Buoy')
     xlabel('Intensity')
     ylabel('Probability')
     saveas(gcf,'../../Output/Part0/Y_gauss1D.jpg')
     
-    for num = 1:length(imgFiles)
     % Read the image
-    I = imread([imageFolder imgFiles(num).name]);
-    
-    % Plot the image before making it a double
-    figure
-    imshow(I)
-    hold on
-    I = double(I);
+    I = imread(Frame);
+    I_double = double(I);
     
     % Compute gaussian probabilities
-    greenProb = zeros(size(I,1),size(I,2));
-    redProb = zeros(size(I,1),size(I,2));
-    yellowProb = zeros(size(I,1),size(I,2));
-    for i = 1:size(I,1)
-        for j = 1:size(I,2)
-            greenProb(i,j) = gauss(I(i,j,2),greenMean,greenSigma);
-            redProb(i,j) = gauss(I(i,j,1),redMean,redSigma);
-            yellowProb(i,j) = gauss(mean(I(i,j,1:2)),yellowMean,yellowSigma);
+    greenProb = zeros(size(I_double,1),size(I_double,2));
+    redProb = zeros(size(I_double,1),size(I_double,2));
+    yellowProb = zeros(size(I_double,1),size(I_double,2));
+    for i = 1:size(I_double,1)
+        for j = 1:size(I_double,2)
+            greenProb(i,j) = gauss(I_double(i,j,2),greenMean,greenSigma);
+            redProb(i,j) = gauss(I_double(i,j,1),redMean,redSigma);
+            yellowProb(i,j) = gauss(mean(I_double(i,j,1:2)),yellowMean,yellowSigma);
         end
     end
     
@@ -81,20 +66,11 @@
     greenInd = [];
     for i = 1:length(greenProperty)
         if maxArea < greenProperty(i).Area
-            if (all(greenProperty(i).Centroid > 35))&&(all(greenProperty(i).Centroid < flip(size(greenProb))-35))
+            if (all(greenProperty(i).Centroid > 30))&&(all(greenProperty(i).Centroid < flip(size(greenProb))-30))
                 maxArea = greenProperty(i).Area;
                 greenInd = i;
             end
         end
-    end
-    
-    % Plot green buoy as there are no disparities
-    if ~isempty(greenInd)
-        greenConnected = bwconncomp(greenBuoy);
-        greenBuoy = zeros(size(greenBuoy));
-        greenBuoy(greenConnected.PixelIdxList{greenInd}) = 1;
-        greenBoundary = bwboundaries(greenBuoy);
-        plot(greenBoundary{1}(:,2),greenBoundary{1}(:,1),'g','LineWidth',2);
     end
     
     % Identify red buoy
@@ -107,7 +83,7 @@
     redNextInd = [];
     for i = 1:length(redProperty)
         if redMaxArea < redProperty(i).Area
-            if (all(redProperty(i).Centroid > 35))&&(all(redProperty(i).Centroid < flip(size(redProb))-35))
+            if (all(redProperty(i).Centroid > 30))&&(all(redProperty(i).Centroid < flip(size(redProb))-30))
                 if ~isempty(redInd)
                     redNextMax = redMaxArea;
                     redNextInd = redInd;
@@ -116,7 +92,7 @@
                 redInd = i;
             end
         elseif redNextMax < redProperty(i).Area
-            if (all(redProperty(i).Centroid > 35))&&(all(redProperty(i).Centroid < flip(size(redProb))-35))
+            if (all(redProperty(i).Centroid > 30))&&(all(redProperty(i).Centroid < flip(size(redProb))-30))
                 redNextMax = redProperty(i).Area;
                 redNextInd = i;
             end
@@ -133,7 +109,7 @@
     yellowNextInd = [];
     for i = 1:length(yellowProperty)
         if yellowMaxArea < yellowProperty(i).Area
-            if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
+            if (all(yellowProperty(i).Centroid > 30))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-30))
                 if ~isempty(yellowInd)
                     yellowNextMax = yellowMaxArea;
                     yellowNextInd = yellowInd;
@@ -142,7 +118,7 @@
                 yellowInd = i;
             end
         elseif yellowNextMax < yellowProperty(i).Area
-            if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
+            if (all(yellowProperty(i).Centroid > 30))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-30))
                 yellowNextMax = yellowProperty(i).Area;
                 yellowNextInd = i;
             end
@@ -151,32 +127,50 @@
     
     % Check for overlap
     if (~isempty(redInd))&&(~isempty(yellowInd))
-        tempRedInd = redInd;
-        if (redMaxArea - redNextMax > 325)&&(redMaxArea - redNextMax < 1000)&&(~isempty(redNextInd))
-            tempRedInd = redNextInd;
+        if (redMaxArea - redNextMax > 500)&&(redMaxArea - redNextMax < 1000)&&(~isempty(redNextInd))
+            tempInd = redNextInd;
+            redNextInd = redInd;
+            redInd = tempInd;
         end
-        tempYellowInd = yellowInd;
-        if (yellowMaxArea - yellowNextMax > 325)&&(yellowMaxArea - yellowNextMax < 1000)&&(~isempty(yellowNextInd))
-            tempYellowInd = yellowNextInd;
+        if (yellowMaxArea - yellowNextMax > 500)&&(yellowMaxArea - yellowNextMax < 1000)&&(~isempty(yellowNextInd))
+            tempInd = yellowNextInd;
+            yellowNextInd = yellowInd;
+            yellowInd = tempInd;
         end
-        if norm(redProperty(tempRedInd).Centroid - yellowProperty(tempYellowInd).Centroid) < 10
-            if tempRedInd == redInd
-                if ~isempty(redNextInd)
+        if norm(redProperty(redInd).Centroid - yellowProperty(yellowInd).Centroid) < 20
+            if (~isempty(redNextInd))&&(~isempty(yellowNextInd))
+                if (yellowProperty(yellowInd).Centroid(1) < redProperty(redNextInd).Centroid(1))&&(yellowProperty(yellowNextInd).Centroid(1) > redProperty(redInd).Centroid(1))
                     redInd = redNextInd;
-                else
+                elseif (yellowProperty(yellowInd).Centroid(1) > redProperty(redNextInd).Centroid(1))&&(yellowProperty(yellowNextInd).Centroid(1) < redProperty(redInd).Centroid(1))
+                    yellowInd = yellowNextInd;
+                elseif (yellowProperty(yellowInd).Centroid(1) > redProperty(redNextInd).Centroid(1))&&(yellowProperty(yellowNextInd).Centroid(1) > redProperty(redInd).Centroid(1))
                     redInd = [];
+                    yellowInd = [];
+                else
+                    if abs(redProperty(redInd).Area - yellowProperty(yellowNextInd).Area) < abs(redProperty(redNextInd).Area - yellowProperty(yellowInd).Area)
+                        yellowInd = yellowNextInd;
+                    else
+                        redInd = redNextInd;
+                    end
                 end
+            elseif (isempty(redNextInd))&&(length(redProperty)>1)
+                redInd = [];
+            elseif (isempty(yellowNextInd))&&(length(yellowProperty)>1)
+                yellowInd = [];
+            elseif (isempty(redNextInd))&&(~isempty(yellowNextInd))
+                yellowInd = yellowNextInd;
+            elseif (~isempty(redNextInd))&&(isempty(yellowNextInd))
+                redInd = redNextInd;
             end
-            yellowInd = tempYellowInd;
-        else
-            redInd = tempRedInd;
-            yellowInd = tempYellowInd;
         end
-        if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) > 500
+        % Improve the detection
+        if (~isempty(redInd))&&(~isempty(yellowInd))&&(abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) > 1000)
+            initRedInd = redInd;
+            initYellowInd = yellowInd;
             if ~isempty(redNextInd)
-                if abs(redProperty(redNextInd).Area - yellowProperty(yellowInd).Area) > 500
+                if abs(redProperty(redNextInd).Area - yellowProperty(yellowInd).Area) > 1000
                     if ~isempty(yellowNextInd)
-                        if abs(redProperty(redNextInd).Area - yellowProperty(yellowNextInd).Area) > 500
+                        if abs(redProperty(redNextInd).Area - yellowProperty(yellowNextInd).Area) > 1000
                             if length(redProperty) > 2
                                 redLimit = false;
                             else
@@ -198,7 +192,7 @@
                                         redNextInd = [];
                                         for i = 1:length(redProperty)
                                             if (redMaxArea > redProperty(i).Area)&&(redNextMax < redProperty(i).Area)
-                                                if (all(redProperty(i).Centroid > 35))&&(all(redProperty(i).Centroid < flip(size(redProb))-35))
+                                                if (all(redProperty(i).Centroid > 30))&&(all(redProperty(i).Centroid < flip(size(redProb))-30))
                                                     redNextMax = redProperty(i).Area;
                                                     redNextInd = i;
                                                 end
@@ -208,7 +202,7 @@
                                             redLimit = true;
                                         else
                                             redInd = redNextInd;
-                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 500
+                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 1000
                                                 redLimit = true;
                                                 yellowLimit = true;
                                                 continue;
@@ -222,7 +216,7 @@
                                         yellowNextInd = [];
                                         for i = 1:length(yellowProperty)
                                             if (yellowMaxArea > yellowProperty(i).Area)&&(yellowNextMax < yellowProperty(i).Area)
-                                                if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
+                                                if (all(yellowProperty(i).Centroid > 30))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-30))
                                                     yellowNextMax = yellowProperty(i).Area;
                                                     yellowNextInd = i;
                                                 end
@@ -232,7 +226,7 @@
                                             yellowLimit = true;
                                         else
                                             yellowInd = yellowNextInd;
-                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 500
+                                            if abs(redProperty(redInd).Area - yellowProperty(yellowInd).Area) < 1000
                                                 redLimit = true;
                                                 yellowLimit = true;
                                                 continue;
@@ -249,13 +243,13 @@
                             yellowInd = yellowNextInd;
                         end
                     elseif length(redProperty) > 2
-                        while abs(redProperty(redNextInd).Area - yellowProperty(yellowInd).Area) > 500
+                        while abs(redProperty(redNextInd).Area - yellowProperty(yellowInd).Area) > 1000
                             redMaxArea = redNextMax;
                             redNextMax = 0;
                             redNextInd = [];
                             for i = 1:length(redProperty)
                                 if (redMaxArea > redProperty(i).Area)&&(redNextMax < redProperty(i).Area)
-                                    if (all(redProperty(i).Centroid > 35))&&(all(redProperty(i).Centroid < flip(size(redProb))-35))
+                                    if (all(redProperty(i).Centroid > 30))&&(all(redProperty(i).Centroid < flip(size(redProb))-30))
                                         redNextMax = redProperty(i).Area;
                                         redNextInd = i;
                                     end
@@ -275,15 +269,15 @@
                     redInd = redNextInd;
                 end
             elseif ~isempty(yellowNextInd)
-                if abs(redProperty(redInd).Area - yellowProperty(yellowNextInd).Area) > 500
+                if abs(redProperty(redInd).Area - yellowProperty(yellowNextInd).Area) > 1000
                     if length(yellowProperty) > 2
-                        while abs(redProperty(redInd).Area - yellowProperty(yellowNextInd).Area) > 500
+                        while abs(redProperty(redInd).Area - yellowProperty(yellowNextInd).Area) > 1000
                             yellowMaxArea = yellowNextMax;
                             yellowNextMax = 0;
                             yellowNextInd = [];
                             for i = 1:length(yellowProperty)
                                 if (yellowMaxArea > yellowProperty(i).Area)&&(yellowNextMax < yellowProperty(i).Area)
-                                    if (all(yellowProperty(i).Centroid > 35))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-35))
+                                    if (all(yellowProperty(i).Centroid > 30))&&(all(yellowProperty(i).Centroid < flip(size(yellowProb))-30))
                                         yellowNextMax = yellowProperty(i).Area;
                                         yellowNextInd = i;
                                     end
@@ -306,14 +300,29 @@
                 redInd = [];
                 yellowInd = [];
             end
-% %         elseif redNextMax < redProperty(i).Area
-% %             if (all(redProperty(i).Centroid > 35))&&(all(redProperty(i).Centroid < flip(size(redProb))-35))
-% %                 redNextMax = redProperty(i).Area;
-% %                 redNextInd = i;
-% %             end
-% %         end
-% %     end
-% 
+            % Check for overlap once more
+            if (~isempty(redInd))&&(~isempty(yellowInd))&&(norm(redProperty(redInd).Centroid - yellowProperty(yellowInd).Centroid) < 20)
+                if (redInd ~= initRedInd)&&(yellowInd ~= initYellowInd)
+                    if (yellowProperty(yellowInd).Centroid(1) < redProperty(initRedInd).Centroid(1))&&(yellowProperty(initYellowInd).Centroid(1) > redProperty(redInd).Centroid(1))
+                        redInd = initRedInd;
+                    elseif (yellowProperty(yellowInd).Centroid(1) > redProperty(initRedInd).Centroid(1))&&(yellowProperty(initYellowInd).Centroid(1) < redProperty(redInd).Centroid(1))
+                        yellowInd = initYellowInd;
+                    elseif (yellowProperty(yellowInd).Centroid(1) > redProperty(initRedInd).Centroid(1))&&(yellowProperty(initYellowInd).Centroid(1) > redProperty(redInd).Centroid(1))
+                        redInd = [];
+                        yellowInd = [];
+                    else
+                        if abs(redProperty(redInd).Area - yellowProperty(initYellowInd).Area) < abs(redProperty(initRedInd).Area - yellowProperty(yellowInd).Area)
+                            yellowInd = initYellowInd;
+                        else
+                            redInd = initRedInd;
+                        end
+                    end
+                elseif redInd ~= initRedInd
+                    redInd = initRedInd;
+                elseif yellowInd ~= initYellowInd
+                    yellowInd = initYellowInd;
+                end
+            end
         end
     elseif ~isempty(redInd)
         if (redMaxArea - redNextMax > 325)&&(redMaxArea - redNextMax < 1000)&&(~isempty(redNextInd))
@@ -325,13 +334,31 @@
         end
     end
     
+    % Verify green buoys existence
+    if (~isempty(yellowInd))&&(~isempty(greenInd))&&(abs(greenProperty(greenInd).Area - yellowProperty(yellowInd).Area) > 1000)
+        greenInd = [];
+    elseif (~isempty(redInd))&&(~isempty(greenInd))&&(abs(redProperty(redInd).Area - greenProperty(greenInd).Area) > 1000)
+        greenInd = [];
+    end
+    
+    % Plot green buoy as there are no disparities
+    if ~isempty(greenInd)
+        greenConnected = bwconncomp(greenBuoy);
+        greenBuoy = zeros(size(greenBuoy));
+        greenBuoy(greenConnected.PixelIdxList{greenInd}) = 1;
+        greenBoundary = bwboundaries(greenBuoy);
+        greenBoundary = reshape(flip(greenBoundary{1}'),1,numel(greenBoundary{1}));
+        I = insertShape(I,'Polygon',greenBoundary,'LineWidth',2,'Color','g');
+    end
+    
     % Plot red buoy
     if ~isempty(redInd)
         redConnected = bwconncomp(redBuoy);
         redBuoy = zeros(size(redBuoy));
         redBuoy(redConnected.PixelIdxList{redInd}) = 1;
         redBoundary = bwboundaries(redBuoy);
-        plot(redBoundary{1}(:,2),redBoundary{1}(:,1),'r','LineWidth',2);
+        redBoundary = reshape(flip(redBoundary{1}'),1,numel(redBoundary{1}));
+        I = insertShape(I,'Polygon',redBoundary,'LineWidth',2,'Color','r');
     end
     
     % Plot yellow buoy
@@ -340,23 +367,24 @@
         yellowBuoy = zeros(size(yellowBuoy));
         yellowBuoy(yellowConnected.PixelIdxList{yellowInd}) = 1;
         yellowBoundary = bwboundaries(yellowBuoy);
-        plot(yellowBoundary{1}(:,2),yellowBoundary{1}(:,1),'y','LineWidth',2);
+        yellowBoundary = reshape(flip(yellowBoundary{1}'),1,numel(yellowBoundary{1}));
+        I = insertShape(I,'Polygon',yellowBoundary,'LineWidth',2,'Color','y');
     end
     
-    hold off
+    % Plot the image before saving it
+    imshow(I)
+    imwrite(I,['../../Output/Part0/seg_' Frame(end-6:end)]);
+end
 
-%     imshow(yellowBuoy)
-%     yellowBuoy = bwmorph(imfill(bwmorph(bwmorph(yellowBuoy,'thicken',10),'close',5),'holes'),'thin',8);
-%     yellowBuoy2 = bwareafilt(yellowBuoy,[500 5000]);
+function N = gauss(x, mu, sigma)
+% This function computes N(x|mu,sigma)
 
-%     maskR = bwmorph(maskR,'thicken',2);
-%     maskR = bwmorph(maskR,'close',10);
-%     maskR = bwareafilt(maskR2,[200 2000]);
-%     maskR = imfill(maskR,'holes');
-%     imshow(maskR)
-    
+    N = (1/(2*pi)^(length(x)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
+    if isnan(N)
+        N = 0;
     end
-
+    
+end
 %     % Create 1-D gaussians
 %     value = (0.5:255.5)';
 %     [muG,sigmaG] = normfit(value,0.05,zeros(size(value)),greenHist);
