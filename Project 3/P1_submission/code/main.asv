@@ -1,0 +1,40 @@
+% Define the folder of training set
+trainFolder = '..\input\Images\TrainingSet\Frames\';
+% Read all training image names
+trainFiles = dir([trainFolder '*.jpg']);
+
+% Define the folder of testing set
+testFolder = '..\input\Images\TestSet\Frames\';
+% Read all training image names
+testFiles = dir([testFolder '*.jpg']);
+
+% Define the folder of cropped buoys
+cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
+
+video2images('..\input\detectbuoy.avi',[],'..\input\Images\')
+
+cropImages(trainFolder,cropFolder)
+
+averageHistogram(trainFolder,cropFolder,'RGB')
+
+vidObj = VideoWriter('..\output\segment1D.mp4','MPEG-4');
+vidObj.FrameRate = 5;
+open(vidObj)
+count = 1;
+for i = 1:length(testFiles)+length(trainFiles)
+    if i == 1
+        I = segment1D('RGB',[trainFolder trainFiles(1).name],true);
+    elseif rem(i,10) == 1
+        count = count + 1;
+        I = segment1D('RGB',[trainFolder trainFiles(count).name],false);
+    else
+        I = segment1D('RGB',[testFolder testFiles(i-count).name],false);
+    end
+end
+
+% Segment training data
+for i = 1:length(trainFiles)
+    segment1D_2('RGB',[trainFolder trainFiles(i).name],false);
+end
+
+

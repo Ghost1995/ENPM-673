@@ -6,18 +6,22 @@
 %        frame --> Location of the images of the buoy
 %   plot_gauss --> States whether to plot the gaussian used or not
 % 
+% Output:
+%   I --> Segmented image
+% 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function segment1D_2(colorSpace, frame, plot_gauss)
+function I = segment1D(colorSpace, frame, plot_gauss)
 
     % Get color distributions
+    greenDist = []; redDist = []; yellowDist = [];
     try
-        load(['..\..\..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+        load(['..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
     catch
-%         averageHistogram('..\input\Images\TrainingSet\Frames\','..\input\Images\TrainingSet\CroppedBuoys\','RGB')
-        averageHistogram('RGB')
-        load(['..\..\..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+        disp('Color Distributions not found. First compute them using averageHistogram.m')
+        I = [];
+        return
     end
     
     % Generate 1-D gaussian for green buoy
@@ -29,28 +33,30 @@ function segment1D_2(colorSpace, frame, plot_gauss)
     
     % Plot the three gaussians if asked
     if plot_gauss
+        figure('units','normalized','outerposition',[0 0 1 1])
         plot(0:255,normpdf(0:255,greenMean,greenSigma))
         title('1-D Gaussian to Detect Green Buoy')
         xlabel('Intensity')
         ylabel('Probability')
-        saveas(gcf,'../../Output/Part0/G_gauss1D.jpg')
+        saveas(gcf,'../output/G_gauss1D.jpg')
         
+        figure('units','normalized','outerposition',[0 0 1 1])
         plot(0:255,normpdf(0:255,redMean,redSigma))
         title('1-D Gaussian to Detect Red Buoy')
         xlabel('Intensity')
         ylabel('Probability')
-        saveas(gcf,'../../Output/Part0/R_gauss1D.jpg')
+        saveas(gcf,'../output/R_gauss1D.jpg')
         
+        figure('units','normalized','outerposition',[0 0 1 1])
         plot(0:255,normpdf(0:255,yellowMean,yellowSigma))
         title('1-D Gaussian to Detect Yellow Buoy')
         xlabel('Intensity')
         ylabel('Probability')
-        saveas(gcf,'../../Output/Part0/Y_gauss1D.jpg')
+        saveas(gcf,'../output/Y_gauss1D.jpg')
     end
     
     % Read the image
     I = imread(frame);
-    imshow(I) %%%%%%%%%%%%%% to be removed
     I_green = double(I(:,:,2));
     I_red = double(I(:,:,1));
     I_yellow = mean(double(I(:,:,1:2)),3);
@@ -69,16 +75,19 @@ function segment1D_2(colorSpace, frame, plot_gauss)
     
     % Identify green buoy
     greenBuoy = greenProb > std2(greenProb);
-    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',5),'holes'),'thin',7),[450 625]);
+    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',5),'holes'),'thin',7),[250 650]);
     greenProperty = regionprops(greenBuoy);
     greenArea = [];
+    greenInd = [];
     for i = 1:length(greenProperty)
         if (greenProperty(i).Centroid(2) > 150)&&(greenProperty(i).Centroid(2) < size(greenProb,1)-100)
             greenArea = [greenArea; greenProperty(i).Area];
+            greenInd = [greenInd; i];
         end
     end
     if ~isempty(greenArea)
-        [greenArea,greenInd] = sort(greenArea,'descend');
+        [greenArea,sequence] = sort(greenArea,'descend');
+        greenInd = greenInd(sequence);
         greenIndex = 1;
         greenExist = true;
     else
@@ -91,13 +100,16 @@ function segment1D_2(colorSpace, frame, plot_gauss)
     redBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(redBuoy,'thicken',10),'close',5),'holes'),'thin',8),[400 5000]);
     redProperty = regionprops(redBuoy);
     redArea = [];
+    redInd = [];
     for i = 1:length(redProperty)
         if (redProperty(i).Centroid(2) > 150)&&(redProperty(i).Centroid(2) < size(redProb,1)-100)
             redArea = [redArea; redProperty(i).Area];
+            redInd = [redInd; i];
         end
     end
     if ~isempty(redArea)
-        [redArea,redInd] = sort(redArea,'descend');
+        [redArea,sequence] = sort(redArea,'descend');
+        redInd = redInd(sequence);
         redIndex = 1;
         redExist = true;
     else
@@ -107,16 +119,19 @@ function segment1D_2(colorSpace, frame, plot_gauss)
     
     % Identify yellow buoy
     yellowBuoy = yellowProb > std2(yellowProb);
-    yellowBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(yellowBuoy,'thicken',10),'close',5),'holes'),'thin',8),[500 4000]);
+    yellowBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(yellowBuoy,'thicken',10),'close',5),'holes'),'thin',8),[400 4000]);
     yellowProperty = regionprops(yellowBuoy);
     yellowArea = [];
+    yellowInd = [];
     for i = 1:length(yellowProperty)
         if (yellowProperty(i).Centroid(2) > 150)&&(yellowProperty(i).Centroid(2) < size(yellowProb,1)-100)
             yellowArea = [yellowArea; yellowProperty(i).Area];
+            yellowInd = [yellowInd; i];
         end
     end
     if ~isempty(yellowArea)
-        [yellowArea,yellowInd] = sort(yellowArea,'descend');
+        [yellowArea,sequence] = sort(yellowArea,'descend');
+        yellowInd = yellowInd(sequence);
         yellowIndex = 1;
         yellowExist = true;
     else
@@ -149,7 +164,7 @@ function segment1D_2(colorSpace, frame, plot_gauss)
         for i = 1:length(redInd)
             for j = 1:length(yellowInd)
                 if (yellowProperty(yellowInd(j)).Centroid(1) < redProperty(redInd(i)).Centroid(1))&&...
-                        (abs(yellowProperty(yellowInd(j)).Area - redProperty(redInd(i)).Area) < 1000)&&...
+                        (abs(yellowProperty(yellowInd(j)).Area - redProperty(redInd(i)).Area) < 2000)&&...
                         (norm(yellowProperty(yellowInd(j)).Centroid - redProperty(redInd(i)).Centroid) > 25)
                     redGrid(i,j) = true;
                 end
@@ -169,7 +184,7 @@ function segment1D_2(colorSpace, frame, plot_gauss)
                                     (norm(redProperty(redInd(j)).Centroid - greenProperty(greenInd(i)).Centroid) > 25)
                                 for k = 1:length(yellowInd)
                                     if (yellowProperty(yellowInd(k)).Centroid(1) < redProperty(redInd(j)).Centroid(1))&&...
-                                            (abs(yellowProperty(yellowInd(k)).Area - redProperty(redInd(j)).Area) < 1000)&&...
+                                            (abs(yellowProperty(yellowInd(k)).Area - redProperty(redInd(j)).Area) < 2000)&&...
                                             (norm(yellowProperty(yellowInd(k)).Centroid - redProperty(redInd(j)).Centroid) > 25)
                                         grid_3D(i,j,k) = true;
                                     end
@@ -179,12 +194,12 @@ function segment1D_2(colorSpace, frame, plot_gauss)
                     end
                     if isempty(find(any(grid_3D,3),1))
                         greenExist = false;
-                        redExist = false;
-                        yellowExist = false;
+                        redIndex = temp;
+                        yellowIndex = find(redGrid(redIndex,:),1);
                     else
                         temp = find(any(any(grid_3D,3),2),1);
                         greenIndex = temp;
-                        redIndex = find(any(grid_3D(greenIndex,:,:),2),1);
+                        redIndex = find(any(grid_3D(greenIndex,:,:),3),1);
                         yellowIndex = find(grid_3D(greenIndex,redIndex,:),1);
                     end
                 end
@@ -222,19 +237,24 @@ function segment1D_2(colorSpace, frame, plot_gauss)
     % Verify detected Buoy
     if redExist && yellowExist && ~redGrid(redIndex,yellowIndex)
         if (exist('redNextIndex','var') ~= 0) && (exist('yellowNextIndex','var') ~= 0)
-            if redGrid(redNextIndex,yellowIndex) && ~redGrid(redIndex,yellowNextIndex)
-                redIndex = redNextIndex;
-            elseif ~redGrid(redNextIndex,yellowIndex) && redGrid(redIndex,yellowNextIndex)
-                yellowIndex = yellowNextIndex;
-            elseif ~redGrid(redNextIndex,yellowIndex) && ~redGrid(redIndex,yellowNextIndex)
-                redExist = false;
-                yellowExist = false;
+            if numel(find(redGrid)) == 1
+                redIndex = find(any(redGrid,2),1);
+                yellowIndex = find(redGrid(redIndex,:),1);
             else
-                if abs(redArea(redIndex) - yellowArea(yellowNextIndex)) < abs(redArea(redNextIndex) - yellowArea(yellowIndex))
-                    yellowIndex = yellowNextIndex;
-                else
-                    redIndex = redNextIndex;
+                tempRedIndex = find(any(redGrid,2));
+                tempYellowIndex = find(redGrid(redIndex,:));
+                minAreaDiff = Inf;
+                for i = 1:length(tempRedIndex)
+                    for j = 1:length(tempYellowIndex)
+                        if (redGrid(tempRedIndex(i),tempYellowIndex(j)))&&(minAreaDiff > abs(redArea(tempRedIndex(i)) - yellowArea(tempYellowIndex(j))))
+                            minAreaDiff = abs(redArea(tempRedIndex(i)) - yellowArea(tempYellowIndex(j)));
+                            tempRed = tempRedIndex(i);
+                            tempYellow = tempYellowIndex(j);
+                        end
+                    end
                 end
+                redIndex = tempRed;
+                yellowIndex = tempYellow;
             end
         elseif (exist('redNextIndex','var') == 0) && (exist('yellowNextIndex','var') ~= 0)
             if length(redArea) > redIndex
@@ -254,8 +274,8 @@ function segment1D_2(colorSpace, frame, plot_gauss)
         end
     end
     if greenExist && redExist && ~greenGrid(greenIndex,redIndex)
-        clear redNextIndex
-        if redExist
+        if redExist && (redIndex == redNextIndex)
+            clear redNextIndex
             if length(redArea) > redIndex
                 if (redArea(redIndex) - redArea(redIndex+1) > 250)&&(redArea(redIndex) - redArea(redIndex+1) < 1000)
                     redNextIndex = redIndex;
@@ -317,9 +337,9 @@ function segment1D_2(colorSpace, frame, plot_gauss)
         I = insertShape(I,'Polygon',yellowBoundary,'LineWidth',2,'Color','y');
     end
     
-    % Plot the image before saving it
-    imshow(I)
-%     imwrite(I,['../../Output/Part0/seg_' Frame(end-6:end)]);
+%     % Plot the image before saving it
+%     imshow(I)
+%     imwrite(I,['../../Output/Part0/seg_' frame(end-6:end)]);
 end
 
 function N = gauss(x, mu, sigma)
@@ -331,27 +351,3 @@ function N = gauss(x, mu, sigma)
     end
     
 end
-%     % Create 1-D gaussians
-%     value = (0.5:255.5)';
-%     [muG,sigmaG] = normfit(value,0.05,zeros(size(value)),greenHist);
-%     [muR,sigmaR] = normfit(value,0.05,zeros(size(value)),redHist);
-%     [muY,sigmaY] = normfit(value,0.05,zeros(size(value)),yellowHist);
-%     totalHist = (sum(greenHist)*greenHist + sum(redHist)*redHist + sum(yellowHist)*yellowHist)/sum(greenHist + redHist + yellowHist);
-%     [mu,sigma] = normfit(value,0.05,zeros(size(value)),totalHist);
-%     
-%     % Save gaussians being used
-%     normG = normpdf(value,muG,sigmaG);
-%     normR = normpdf(value,muR,sigmaR);
-%     normY = normpdf(value,muY,sigmaY);
-%     norm = normpdf(value,mu,sigma);
-%     plot(value,normG);
-%     saveas(gcf,'../../Output/Part0/G_gauss1D.jpg')
-%     plot(value,normR);
-%     saveas(gcf,'../../Output/Part0/R_gauss1D.jpg')
-%     plot(value,normY);
-%     saveas(gcf,'../../Output/Part0/Y_gauss1D.jpg')
-%     plot(value,norm);
-%     saveas(gcf,'../../Output/Part0/gauss1D.jpg')
-    
-    
-% end
