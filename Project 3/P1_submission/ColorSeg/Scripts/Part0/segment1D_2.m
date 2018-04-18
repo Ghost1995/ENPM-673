@@ -2,23 +2,30 @@
 % This code computes average histogram for individual colors
 % 
 % Input:
-%        Frame --> Location of the images of the buoy
+%   colorSpace --> Color space to be used
+%        frame --> Location of the images of the buoy
 %   plot_gauss --> States whether to plot the gaussian used or not
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function segment1D_2(Frame, plot_gauss)
+function segment1D_2(colorSpace, frame, plot_gauss)
 
-    % Compute color distribution from training set
-    [greenHist,redHist,yellowHist] = averageHistogram('RGB');
+    % Get color distributions
+    try
+        load(['..\..\..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+    catch
+%         averageHistogram('..\input\Images\TrainingSet\Frames\','..\input\Images\TrainingSet\CroppedBuoys\','RGB')
+        averageHistogram('RGB')
+        load(['..\..\..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+    end
     
     % Generate 1-D gaussian for green buoy
-    [greenMean,greenSigma] = normfit(greenHist(:,2));
+    [greenMean,greenSigma] = normfit(greenDist(:,2));
     % Generate 1-D gaussian for red buoy
-    [redMean,redSigma] = normfit(redHist(:,1));
+    [redMean,redSigma] = normfit(redDist(:,1));
     % Generate 1-D gaussian for yellow buoy
-    [yellowMean,yellowSigma] = normfit(mean(yellowHist(:,1:2),2));
+    [yellowMean,yellowSigma] = normfit(mean(yellowDist(:,1:2),2));
     
     % Plot the three gaussians if asked
     if plot_gauss
@@ -42,7 +49,7 @@ function segment1D_2(Frame, plot_gauss)
     end
     
     % Read the image
-    I = imread(Frame);
+    I = imread(frame);
     imshow(I) %%%%%%%%%%%%%% to be removed
     I_green = double(I(:,:,2));
     I_red = double(I(:,:,1));
@@ -71,7 +78,7 @@ function segment1D_2(Frame, plot_gauss)
         end
     end
     if ~isempty(greenArea)
-        [greenArea,greenInd] = sort(greenArea);
+        [greenArea,greenInd] = sort(greenArea,'descend');
         greenIndex = 1;
         greenExist = true;
     else
@@ -81,7 +88,7 @@ function segment1D_2(Frame, plot_gauss)
     
     % Identify red buoy
     redBuoy = redProb > std2(redProb);
-    redBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(redBuoy,'thicken',10),'close',5),'holes'),'thin',8),[450 5000]);
+    redBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(redBuoy,'thicken',10),'close',5),'holes'),'thin',8),[400 5000]);
     redProperty = regionprops(redBuoy);
     redArea = [];
     for i = 1:length(redProperty)
@@ -90,7 +97,7 @@ function segment1D_2(Frame, plot_gauss)
         end
     end
     if ~isempty(redArea)
-        [redArea,redInd] = sort(redArea);
+        [redArea,redInd] = sort(redArea,'descend');
         redIndex = 1;
         redExist = true;
     else
@@ -109,7 +116,7 @@ function segment1D_2(Frame, plot_gauss)
         end
     end
     if ~isempty(yellowArea)
-        [yellowArea,yellowInd] = sort(yellowArea);
+        [yellowArea,yellowInd] = sort(yellowArea,'descend');
         yellowIndex = 1;
         yellowExist = true;
     else
@@ -132,7 +139,7 @@ function segment1D_2(Frame, plot_gauss)
         temp = find(any(greenGrid,2),1);
         if ~isempty(temp)
             greenIndex = temp;
-            redIndex = find(greenGrid(temp,:),1);
+            redIndex = find(greenGrid(greenIndex,:),1);
         else
             greenExist = false;
         end
@@ -152,7 +159,7 @@ function segment1D_2(Frame, plot_gauss)
         if ~isempty(temp)
             if greenExist
                 if redIndex == temp
-                    yellowIndex = find(redGrid(temp,:),1);
+                    yellowIndex = find(redGrid(redIndex,:),1);
                 else
                     grid_3D = false(length(greenArea),length(redArea),length(yellowArea));
                     for i = 1:length(greenInd)
@@ -177,13 +184,13 @@ function segment1D_2(Frame, plot_gauss)
                     else
                         temp = find(any(any(grid_3D,3),2),1);
                         greenIndex = temp;
-                        redIndex = find(any(grid_3D(temp,:,:),2),1);
+                        redIndex = find(any(grid_3D(greenIndex,:,:),2),1);
                         yellowIndex = find(grid_3D(greenIndex,redIndex,:),1);
                     end
                 end
             else
                 redIndex = temp;
-                yellowIndex = find(redGrid(temp,:),1);
+                yellowIndex = find(redGrid(redIndex,:),1);
             end
         else
             redExist = false;
@@ -284,7 +291,7 @@ function segment1D_2(Frame, plot_gauss)
     if greenExist
         greenConnected = bwconncomp(greenBuoy);
         greenBuoy = zeros(size(greenBuoy));
-        greenBuoy(greenConnected.PixelIdxList{greenIndex}) = 1;
+        greenBuoy(greenConnected.PixelIdxList{greenInd(greenIndex)}) = 1;
         greenBoundary = bwboundaries(greenBuoy);
         greenBoundary = reshape(flip(greenBoundary{1}'),1,numel(greenBoundary{1}));
         I = insertShape(I,'Polygon',greenBoundary,'LineWidth',2,'Color','g');
@@ -294,7 +301,7 @@ function segment1D_2(Frame, plot_gauss)
     if redExist
         redConnected = bwconncomp(redBuoy);
         redBuoy = zeros(size(redBuoy));
-        redBuoy(redConnected.PixelIdxList{redIndex}) = 1;
+        redBuoy(redConnected.PixelIdxList{redInd(redIndex)}) = 1;
         redBoundary = bwboundaries(redBuoy);
         redBoundary = reshape(flip(redBoundary{1}'),1,numel(redBoundary{1}));
         I = insertShape(I,'Polygon',redBoundary,'LineWidth',2,'Color','r');
@@ -304,7 +311,7 @@ function segment1D_2(Frame, plot_gauss)
     if yellowExist
         yellowConnected = bwconncomp(yellowBuoy);
         yellowBuoy = zeros(size(yellowBuoy));
-        yellowBuoy(yellowConnected.PixelIdxList{yellowIndex}) = 1;
+        yellowBuoy(yellowConnected.PixelIdxList{yellowInd(yellowIndex)}) = 1;
         yellowBoundary = bwboundaries(yellowBuoy);
         yellowBoundary = reshape(flip(yellowBoundary{1}'),1,numel(yellowBoundary{1}));
         I = insertShape(I,'Polygon',yellowBoundary,'LineWidth',2,'Color','y');
