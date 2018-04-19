@@ -16,51 +16,24 @@
 
 % function [mu, sigma] = EM(N, data, plot_path)
 
-N = 5;
-plot_path = '';
-mu = rand(N,3)*1;
-sigma = rand(N,3,3)*1;
-data1(:,1) = normrnd(mu(1,1),sigma(1,1,1),[10 1]);
-data1(:,2) = normrnd(mu(1,2),sigma(1,2,2),[10 1]);
-data1(:,3) = normrnd(mu(1,3),sigma(1,3,3),[10 1]);
-data2(:,1) = normrnd(mu(2,1),sigma(2,1,1),[10 1]);
-data2(:,2) = normrnd(mu(2,2),sigma(2,2,2),[10 1]);
-data2(:,3) = normrnd(mu(2,3),sigma(2,3,3),[10 1]);
-data3(:,1) = normrnd(mu(3,1),sigma(3,1,1),[10 1]);
-data3(:,2) = normrnd(mu(3,2),sigma(3,2,2),[10 1]);
-data3(:,3) = normrnd(mu(3,3),sigma(3,3,3),[10 1]);
-% data1 = normrnd(reshape(repmat(mu(1,:),2,1),[1,2,2]),sigma(1,:,:),[10 2]);
-% data2 = normrnd(reshape(repmat(mu(2,:),2,1),[1,2,2]),sigma(2,:,:),[10 2]);
-% data3 = normrnd(reshape(repmat(mu(3,:),2,1),[1,2,2]),sigma(3,:,:),[10 2]);
-data = [data1;data2;data3];
 init_mu = mu;
 init_sigma = sigma;
-% plot(data1,data1,'r*')
-% hold on
-% viscircles([mu(1) mu(1)],sigma(1),'Color','r')
-% plot(data2,data2,'g*')
-% viscircles([mu(2) mu(2)],sigma(2),'Color','g')
-% plot(data3,data3,'b*')
-% viscircles([mu(3) mu(3)],sigma(3),'Color','b')
-% hold off
-    
-    if size(data,1) < size(data,2)
-        data = data';
-    end
-    mu = rand(N,size(data,2)).*max(data);
-    sigma = sqrt(var(data));%zeros(N,size(data,2),size(data,2));
-%     for i = 1:N
-%         for j = 1:size(data,1)
-%             sigma(i,:,:) = sigma(i,:,:) + reshape((data(j,:) - mu(i,:))'*(data(j,:) - mu(i,:)),[1,size(data,2),size(data,2)]);
-%         end
-%     end
-%     sigma = sigma/size(data,1);
-    % mu = mean(data)*ones(N,size(data,2));
-    % sigma = cov(data)*ones(N,size(data,2),size(data,2));
-    % mu(1) = mu(2) - sigma(1);
-    % mu(3) = mu(2) + sigma(3);
+init_data = data;
+
+    % Initial mixture coefficients are equal
     mixtureCoeff = ones(N,1)/N;
-    % pk = pk/sum(pk);
+    % Initial variances are equal
+    sigma = repmat(diag(var(data)),1,1,N);
+    % Initial mean is set such that they are farthest from each other
+    mu = zeros(N,size(data,2));
+    mu(1,:) = datasample(data,1,1);
+    weights = inf(size(data,1),1);
+    for i = 2:N
+        weights = min(weights,sum((data-mu(i-1,:)).^2,2));
+        weights = weights/sum(weights);
+        mu(i,:) = datasample(data,1,1,'Replace',false,'Weights',weights);
+    end
+    
     likelihood = 0;
     for i = 1:size(data,1)
         indLikelihood = 0;
