@@ -31,25 +31,30 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         end
     end
     
+    % Get the color space to be used
+    possibleColorSpace = {'RGB';'HSV';'YIQ';'NTSC';'YCbCr';'Lab'};
+    colorMatch = find(strcmpi(colorSpace,possibleColorSpace));
+    if isempty(colorMatch) || length(colorMatch) > 1
+        disp('The specified color space is incorrect.')
+        return
+    end
     % Find the color space values and form histogram for each buoy
     greenDist = [];  greenHist = zeros(256,3);  greenCount = 0;
     redDist = [];    redHist = zeros(256,3);    redCount = 0;
     yellowDist = []; yellowHist = zeros(256,3); yellowCount = 0;
     for i = 1:length(trainFiles)
         % Read the image in the format specified
-        if strcmp(colorSpace,'RGB')
-            I = imread([trainFolder trainFiles(i).name]);
-        elseif strcmp(colorSpace,'HSV')
-            I = rgb2hsv(imread([trainFolder trainFiles(i).name]));
-        elseif strcmp(colorSpace,'YIQ')
-            I = rgb2ntsc(imread([trainFolder trainFiles(i).name]));
-        elseif strcmp(colorSpace,'YCbCr')
-            I = rgb2ycbcr(imread([trainFolder trainFiles(i).name]));
-        elseif strcmp(colorSpace,'Lab')
-            I = rgb2lab(imread([trainFolder trainFiles(i).name]));
-        else
-            disp('Color Space incorrect.')
-            return
+        switch colorMatch
+            case 1
+                I = imread([trainFolder trainFiles(i).name]);
+            case 2
+                I = rgb2hsv(imread([trainFolder trainFiles(i).name]));
+            case {3,4}
+                I = rgb2ntsc(imread([trainFolder trainFiles(i).name]));
+            case 5
+                I = rgb2ycbcr(imread([trainFolder trainFiles(i).name]));
+            case 6
+                I = rgb2lab(imread([trainFolder trainFiles(i).name]));
         end
         plane1 = I(:,:,1);
         plane2 = I(:,:,2);

@@ -26,10 +26,16 @@ function I = segment1D(colorSpace, frame, plot_gauss)
     
     % Generate 1-D gaussian for green buoy
     [greenMean,greenSigma] = normfit(greenDist(:,2));
+%     greenMean = mean(greenDist(:,2));
+%     greenSigma = var(greenDist(:,2));
     % Generate 1-D gaussian for red buoy
     [redMean,redSigma] = normfit(redDist(:,1));
+%     redMean = mean(redDist(:,1));
+%     redSigma = var(redDist(:,1));
     % Generate 1-D gaussian for yellow buoy
     [yellowMean,yellowSigma] = normfit(mean(yellowDist(:,1:2),2));
+%     yellowMean = mean(mean(yellowDist(:,1:2),2));
+%     yellowSigma = var(mean(yellowDist(:,1:2),2));
     
     % Plot the three gaussians if asked
     if plot_gauss
@@ -75,12 +81,12 @@ function I = segment1D(colorSpace, frame, plot_gauss)
     
     % Identify green buoy
     greenBuoy = greenProb > std2(greenProb);
-    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',5),'holes'),'thin',7),[250 650]);
+    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',10),'fill'),'holes'),'thin',8),[150 700]);
     greenProperty = regionprops(greenBuoy);
     greenArea = [];
     greenInd = [];
     for i = 1:length(greenProperty)
-        if (greenProperty(i).Centroid(2) > 150)&&(greenProperty(i).Centroid(2) < size(greenProb,1)-100)
+        if (greenProperty(i).Centroid(2) > 200)&&(greenProperty(i).Centroid(2) < size(greenProb,1)-100)
             greenArea = [greenArea; greenProperty(i).Area];
             greenInd = [greenInd; i];
         end
@@ -97,7 +103,7 @@ function I = segment1D(colorSpace, frame, plot_gauss)
     
     % Identify red buoy
     redBuoy = redProb > std2(redProb);
-    redBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(redBuoy,'thicken',10),'close',5),'holes'),'thin',8),[400 5000]);
+    redBuoy = bwareafilt(imfill(bwmorph(bwmorph(bwmorph(redBuoy,'clean',5),'close',10),'fill'),'holes'),[250 5500]);
     redProperty = regionprops(redBuoy);
     redArea = [];
     redInd = [];
@@ -118,8 +124,8 @@ function I = segment1D(colorSpace, frame, plot_gauss)
     end
     
     % Identify yellow buoy
-    yellowBuoy = yellowProb > std2(yellowProb);
-    yellowBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(yellowBuoy,'thicken',10),'close',5),'holes'),'thin',8),[400 4000]);
+    yellowBuoy = yellowProb > 2*std2(yellowProb);
+    yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(bwmorph(yellowBuoy,'clean',5),'close',10),'fill'),'holes'),[400 4000]);
     yellowProperty = regionprops(yellowBuoy);
     yellowArea = [];
     yellowInd = [];
@@ -145,7 +151,7 @@ function I = segment1D(colorSpace, frame, plot_gauss)
         for i = 1:length(greenInd)
             for j = 1:length(redInd)
                 if (redProperty(redInd(j)).Centroid(1) < greenProperty(greenInd(i)).Centroid(1))&&...
-                        (abs(redProperty(redInd(j)).Area - greenProperty(greenInd(i)).Area) < 1000)&&...
+                        (abs(redProperty(redInd(j)).Area - greenProperty(greenInd(i)).Area) < 500)&&...
                         (norm(redProperty(redInd(j)).Centroid - greenProperty(greenInd(i)).Centroid) > 25)
                     greenGrid(i,j) = true;
                 end
@@ -173,136 +179,41 @@ function I = segment1D(colorSpace, frame, plot_gauss)
         temp = find(any(redGrid,2),1);
         if ~isempty(temp)
             if greenExist
-                if redIndex == temp
-                    yellowIndex = find(redGrid(redIndex,:),1);
-                else
-                    grid_3D = false(length(greenArea),length(redArea),length(yellowArea));
-                    for i = 1:length(greenInd)
-                        for j = 1:length(redInd)
-                            if (redProperty(redInd(j)).Centroid(1) < greenProperty(greenInd(i)).Centroid(1))&&...
-                                    (abs(redProperty(redInd(j)).Area - greenProperty(greenInd(i)).Area) < 1000)&&...
-                                    (norm(redProperty(redInd(j)).Centroid - greenProperty(greenInd(i)).Centroid) > 25)
-                                for k = 1:length(yellowInd)
-                                    if (yellowProperty(yellowInd(k)).Centroid(1) < redProperty(redInd(j)).Centroid(1))&&...
-                                            (abs(yellowProperty(yellowInd(k)).Area - redProperty(redInd(j)).Area) < 2000)&&...
-                                            (norm(yellowProperty(yellowInd(k)).Centroid - redProperty(redInd(j)).Centroid) > 25)
+                grid_3D = false(length(greenArea),length(redArea),length(yellowArea));
+                for i = 1:length(greenInd)
+                    for j = 1:length(redInd)
+                        if (redProperty(redInd(j)).Centroid(1) < greenProperty(greenInd(i)).Centroid(1))&&...
+                                (abs(redProperty(redInd(j)).Area - greenProperty(greenInd(i)).Area) < 500)&&...
+                                (norm(redProperty(redInd(j)).Centroid - greenProperty(greenInd(i)).Centroid) > 25)
+                            rg_dist = norm(redProperty(redInd(j)).Centroid - greenProperty(greenInd(i)).Centroid);
+                            for k = 1:length(yellowInd)
+                                if (yellowProperty(yellowInd(k)).Centroid(1) < redProperty(redInd(j)).Centroid(1))&&...
+                                        (abs(yellowProperty(yellowInd(k)).Area - redProperty(redInd(j)).Area) < 500)&&...
+                                        (norm(yellowProperty(yellowInd(k)).Centroid - redProperty(redInd(j)).Centroid) > 25)
+                                    yr_dist = norm(yellowProperty(yellowInd(k)).Centroid - redProperty(redInd(j)).Centroid);
+                                    if abs(rg_dist - yr_dist) < 25
                                         grid_3D(i,j,k) = true;
                                     end
                                 end
                             end
                         end
                     end
-                    if isempty(find(any(grid_3D,3),1))
-                        greenExist = false;
-                        redIndex = temp;
-                        yellowIndex = find(redGrid(redIndex,:),1);
-                    else
-                        temp = find(any(any(grid_3D,3),2),1);
-                        greenIndex = temp;
-                        redIndex = find(any(grid_3D(greenIndex,:,:),3),1);
-                        yellowIndex = find(grid_3D(greenIndex,redIndex,:),1);
-                    end
+                end
+                if isempty(find(grid_3D,1))
+                    greenExist = false;
+                    redIndex = temp;
+                    yellowIndex = find(redGrid(redIndex,:),1);
+                else
+                    temp = find(any(any(grid_3D,3),2),1);
+                    greenIndex = temp;
+                    redIndex = find(any(grid_3D(greenIndex,:,:),3),1);
+                    yellowIndex = find(grid_3D(greenIndex,redIndex,:),1);
                 end
             else
                 redIndex = temp;
                 yellowIndex = find(redGrid(redIndex,:),1);
             end
         else
-            redExist = false;
-        end
-    end
-    
-    % Improve detection
-    if redExist
-        if length(redArea) > redIndex
-            if (redArea(redIndex) - redArea(redIndex+1) > 250)&&(redArea(redIndex) - redArea(redIndex+1) < 1000)
-                redNextIndex = redIndex;
-                redIndex = redIndex + 1;
-            else
-                redNextIndex = redIndex + 1;
-            end
-        end
-    end
-    if yellowExist
-        if length(yellowArea) > yellowIndex
-            if (yellowArea(yellowIndex) - yellowArea(yellowIndex+1) > 250)&&(yellowArea(yellowIndex) - yellowArea(yellowIndex+1) < 1000)
-                yellowNextIndex = yellowIndex;
-                yellowIndex = yellowIndex + 1;
-            else
-                yellowNextIndex = yellowIndex + 1;
-            end
-        end
-    end
-    
-    % Verify detected Buoy
-    if redExist && yellowExist && ~redGrid(redIndex,yellowIndex)
-        if (exist('redNextIndex','var') ~= 0) && (exist('yellowNextIndex','var') ~= 0)
-            if numel(find(redGrid)) == 1
-                redIndex = find(any(redGrid,2),1);
-                yellowIndex = find(redGrid(redIndex,:),1);
-            else
-                tempRedIndex = find(any(redGrid,2));
-                tempYellowIndex = find(redGrid(redIndex,:));
-                minAreaDiff = Inf;
-                for i = 1:length(tempRedIndex)
-                    for j = 1:length(tempYellowIndex)
-                        if (redGrid(tempRedIndex(i),tempYellowIndex(j)))&&(minAreaDiff > abs(redArea(tempRedIndex(i)) - yellowArea(tempYellowIndex(j))))
-                            minAreaDiff = abs(redArea(tempRedIndex(i)) - yellowArea(tempYellowIndex(j)));
-                            tempRed = tempRedIndex(i);
-                            tempYellow = tempYellowIndex(j);
-                        end
-                    end
-                end
-                redIndex = tempRed;
-                yellowIndex = tempYellow;
-            end
-        elseif (exist('redNextIndex','var') == 0) && (exist('yellowNextIndex','var') ~= 0)
-            if length(redArea) > redIndex
-                redExist = false;
-            else
-                yellowIndex = yellowNextIndex;
-            end
-        elseif (exist('redNextIndex','var') ~= 0) && (exist('yellowNextIndex','var') == 0)
-            if length(yellowArea) > yellowIndex
-                yellowExist = false;
-            else
-                redIndex = redNextIndex;
-            end
-        else
-            redExist = false;
-            yellowExist = false;
-        end
-    end
-    if greenExist && redExist && ~greenGrid(greenIndex,redIndex)
-        if redExist && (redIndex == redNextIndex)
-            clear redNextIndex
-            if length(redArea) > redIndex
-                if (redArea(redIndex) - redArea(redIndex+1) > 250)&&(redArea(redIndex) - redArea(redIndex+1) < 1000)
-                    redNextIndex = redIndex;
-                    redIndex = redIndex + 1;
-                else
-                    redNextIndex = redIndex + 1;
-                end
-            end
-        end
-        if exist('redNextIndex','var') ~= 0
-            if greenGrid(greenIndex,redNextIndex)
-                redIndex = redNextIndex;
-            else
-                if any(find(greenGrid(:,redIndex)) ~= greenIndex)
-                    greenIndex = find(find(greenGrid(:,redIndex)) ~= greenIndex,1);
-                elseif any(find(greenGrid(:,redNextIndex)) ~= greenIndex)
-                    greenIndex = find(find(greenGrid(:,redNextIndex),1) ~= greenIndex,1);
-                    redIndex = redNextIndex;
-                else
-                    greenExist = false;
-                    redExist = false;
-                end
-            end
-        elseif any(find(greenGrid(:,redIndex)) ~= greenIndex)
-            greenIndex = find(greenGrid(:,redIndex),1);
-        else
-            greenExist = false;
             redExist = false;
         end
     end
@@ -314,7 +225,7 @@ function I = segment1D(colorSpace, frame, plot_gauss)
         greenBuoy(greenConnected.PixelIdxList{greenInd(greenIndex)}) = 1;
         greenBoundary = bwboundaries(greenBuoy);
         greenBoundary = reshape(flip(greenBoundary{1}'),1,numel(greenBoundary{1}));
-        I = insertShape(I,'Polygon',greenBoundary,'LineWidth',2,'Color','g');
+        I = insertShape(I,'Polygon',greenBoundary,'LineWidth',3,'Color','g');
     end
     
     % Plot red buoy
@@ -324,7 +235,7 @@ function I = segment1D(colorSpace, frame, plot_gauss)
         redBuoy(redConnected.PixelIdxList{redInd(redIndex)}) = 1;
         redBoundary = bwboundaries(redBuoy);
         redBoundary = reshape(flip(redBoundary{1}'),1,numel(redBoundary{1}));
-        I = insertShape(I,'Polygon',redBoundary,'LineWidth',2,'Color','r');
+        I = insertShape(I,'Polygon',redBoundary,'LineWidth',3,'Color','r');
     end
     
     % Plot yellow buoy
@@ -334,18 +245,18 @@ function I = segment1D(colorSpace, frame, plot_gauss)
         yellowBuoy(yellowConnected.PixelIdxList{yellowInd(yellowIndex)}) = 1;
         yellowBoundary = bwboundaries(yellowBuoy);
         yellowBoundary = reshape(flip(yellowBoundary{1}'),1,numel(yellowBoundary{1}));
-        I = insertShape(I,'Polygon',yellowBoundary,'LineWidth',2,'Color','y');
+        I = insertShape(I,'Polygon',yellowBoundary,'LineWidth',3,'Color','y');
     end
     
 %     % Plot the image before saving it
 %     imshow(I)
-%     imwrite(I,['../../Output/Part0/seg_' frame(end-6:end)]);
+    imwrite(I,['../output/seg_' frame(end-6:end)]);
 end
 
 function N = gauss(x, mu, sigma)
 % This function computes N(x|mu,sigma)
 
-    N = (1/(2*pi)^(length(x)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
+    N = (1/sqrt(2*pi*sigma^2))*exp(-(1/(2*sigma^2))*(x - mu)^2);
     if isnan(N)
         N = 0;
     end

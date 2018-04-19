@@ -48,13 +48,13 @@ init_sigma = sigma;
         data = data';
     end
     mu = rand(N,size(data,2)).*max(data);
-    sigma = zeros(N,size(data,2),size(data,2));
-    for i = 1:N
-        for j = 1:size(data,1)
-            sigma(i,:,:) = sigma(i,:,:) + reshape((data(j,:) - mu(i,:))'*(data(j,:) - mu(i,:)),[1,size(data,2),size(data,2)]);
-        end
-    end
-    sigma = sigma/size(data,1);
+    sigma = sqrt(var(data));%zeros(N,size(data,2),size(data,2));
+%     for i = 1:N
+%         for j = 1:size(data,1)
+%             sigma(i,:,:) = sigma(i,:,:) + reshape((data(j,:) - mu(i,:))'*(data(j,:) - mu(i,:)),[1,size(data,2),size(data,2)]);
+%         end
+%     end
+%     sigma = sigma/size(data,1);
     % mu = mean(data)*ones(N,size(data,2));
     % sigma = cov(data)*ones(N,size(data,2),size(data,2));
     % mu(1) = mu(2) - sigma(1);

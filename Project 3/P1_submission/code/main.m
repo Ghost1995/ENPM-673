@@ -17,33 +17,35 @@ testFiles = dir([testFolder '*.jpg']);
 % Define the folder of cropped buoys
 cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 
-% Extract frames from the given video
-video2images('..\input\detectbuoy.avi',[],'..\input\Images\')
+% % Extract frames from the given video
+% video2images('..\input\detectbuoy.avi',{trainFolder,testFolder})
 
-% Crop the images to get the training set
-cropImages(trainFolder,cropFolder)
+% % Crop the images to get the training set
+% cropImages(trainFolder,cropFolder)
 
-% Compute average histogram as well as the color distribution
-averageHistogram(trainFolder,cropFolder,'RGB')
+% % Compute average histogram as well as the color distribution
+% averageHistogram(trainFolder,cropFolder,'HSV')
 
 % Create video of segmented images using 1-D gaussian
-vidObj = VideoWriter('..\output\segment1D.mp4','MPEG-4');
-vidObj.FrameRate = 30;
-open(vidObj)
+% vidObj = VideoWriter('..\output\segment1D.mp4','MPEG-4');
+% vidObj.Quality = 100;
+% open(vidObj)
 count = 1;
 for i = 1:length(testFiles)+length(trainFiles)
     if i == 1
-        I = segment1D('RGB',[trainFolder trainFiles(1).name],true);
+        I = segment1D('RGB',[trainFolder trainFiles(1).name],false);
     elseif rem(i,10) == 1
         count = count + 1;
         I = segment1D('RGB',[trainFolder trainFiles(count).name],false);
-        disp(count)
     else
         I = segment1D('RGB',[testFolder testFiles(i-count).name],false);
-        disp(i-count)
     end
-    writeVideo(vidObj,I)
+%     for j = 1:6
+%         writeVideo(vidObj,I)
+%     end
 end
-close(vidObj)
+% close(vidObj)
+        
+% I = segment1D('RGB',[testFolder testFiles(35).name],false);
 
 
