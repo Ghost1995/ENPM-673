@@ -47,24 +47,91 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % close(vidObj)
 
 % Create data using 3 1-D gaussians
-N = 3;
-D = 1;
-plot_path = '';
-mu = rand(N,D)*5;
-sigma = zeros(N,D,D);
-data = [];
-for i = 1:N
-    sigma(i,:,:) = diag(rand(1,D)*2);
-    while det(reshape(sigma(i,:,:),D,D)) < 0
-        sigma(i,:,:) = diag(rand(1,D)*2);
-    end
-    data = [data; mvnrnd(mu(i,:),reshape(sigma(i,:,:),D,D),10)];
-end
-X = sort(data);
-Y = (normpdf(X,mu(1),sigma(1)) + normpdf(X,mu(2),sigma(2)) + normpdf(X,mu(3),sigma(3)))./3;
+data = cat(3,linspace(10,30)',linspace(30,50)',linspace(50,70)');
+mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
+sigma = [std(data(:,:,1));std(data(:,:,2));std(data(:,:,3))];
+X = [data(:,:,1); data(:,:,2); data(:,:,3)];
+X = sort(X);
+figure('units','normalized','outerposition',[0 0 1 1])
+Y = (normpdf(X,mu(1),sqrt(sigma(1))) + normpdf(X,mu(2),sqrt(sigma(2))) + normpdf(X,mu(3),sqrt(sigma(3))))/3;
 plot(X,Y)
 hold on
 % Use EM to retrieve the three gaussians used
+[new_mu,new_sigma,new_mixtureCoeff] = EM(3,X);
+for i = 1:300
+    for j = 1:3
+        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
+    end
+end
+plot(X,sum(postProb,2))
+hold off
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution')
+legend('Actual PDF','Derived PDF')
+saveas(gcf,'..\output\EM1D3N.jpg')
+
+% Plot the data generated using 3 1-D gaussians again
+figure('units','normalized','outerposition',[0 0 1 1])
+plot(X,Y)
+hold on
+% Use EM to retrieve four gaussians instead of three
+[new_mu,new_sigma,new_mixtureCoeff] = EM(4,X);
+for i = 1:300
+    for j = 1:4
+        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
+    end
+end
+plot(X,sum(postProb,2))
+hold off
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution')
+legend('Actual PDF','Derived PDF')
+saveas(gcf,'..\output\EM1D4N.jpg')
+
+% Check if the algorithm works for 3-D gaussian
+data = cat(3,(1 + rand(100,3))*10,(1 + rand(100,3))*20,(1 + rand(100,3))*30);
+mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
+sigma = cat(3,cov(data(:,:,1)),cov(data(:,:,2)),cov(data(:,:,3)));
+X = [data(:,:,1); data(:,:,2); data(:,:,3)];
+X = sort(X);
+mixtureCoeff = ones(3,1)/3;
+for i = 1:300
+    for j = 1:3
+        postProb(i,j) = mixtureCoeff(j)*gauss(X(i,:),mu(j,:),sigma(j,:,:));
+    end
+end
+figure('units','normalized','outerposition',[0 0 1 1])
+scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+hold on
+[new_mu,new_sigma,new_mixtureCoeff] = EM(3,X);
+for i = 1:300
+    for j = 1:3
+        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
+    end
+end
+scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+hold off
+xlabel('X - Data Points')
+ylabel('Y - Data Points')
+zlabel('Z - Data Points')
+cb = colorbar;
+cb.Label.String = 'Probability';
+title('Probability Distribution')
+legend('Actual PDF','Derived PDF')
+saveas(gcf,'..\output\EM3D3N.jpg')
 
 
 
+
+function N = gauss(x, mu, sigma)
+% This function computes N(x|mu,sigma)
+
+    sigma = reshape(sigma,[size(sigma,2) size(sigma,3)]);
+    N = (1/(2*pi)^(size(x,2)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
+    if isnan(N)
+        N = 0;
+    end
+    
+end
