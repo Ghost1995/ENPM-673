@@ -3,18 +3,17 @@
 % gaussians
 % 
 % Input:
-%           N --> Number of Gaussians
-%        data --> Data to be used to get the parameters
+%   data --> Data to be used to get the parameters
+%      N --> Number of Gaussians
 % 
-% Input:
-%             mu --> Mean of the Gaussians (N x D)
-%          sigma --> Covariance of the Gaussians (N x D x D)
-%   mixtureCoeff --> Mixture coefficients of the Gaussians (N x 1)
+% Output:
+%   gmObj --> Gaussian Mixture Object. It contains the mean (N x D), 
+%             covariance (D x D x N), and mixture coefficients (N x 1)
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [mu, sigma, mixtureCoeff] = EM(N, data)
+function gmObj = EM(data, N)
 
     % Ensure data is in the desired format
     if size(data,1) < size(data,2)
@@ -25,7 +24,7 @@ function [mu, sigma, mixtureCoeff] = EM(N, data)
     mixtureCoeff = ones(N,1)/N;
     % Initial variances are equal
     for i = 1:N
-        sigma(i,:,:) = diag(var(data));
+        sigma(:,:,i) = diag(var(data));
     end
     % Initial mean is set as N random samples
     mu = datasample(data,N,1);
@@ -38,7 +37,7 @@ function [mu, sigma, mixtureCoeff] = EM(N, data)
         prob = zeros(numSamples,N);
         for i = 1:numSamples
             for j = 1:N
-                prob(i,j) = mixtureCoeff(j)*gauss(data(i,:),mu(j,:),sigma(j,:,:));
+                prob(i,j) = mixtureCoeff(j)*gauss(data(i,:),mu(j,:),sigma(:,:,j));
             end
         end
         % Compute posterior probability
@@ -56,13 +55,6 @@ function [mu, sigma, mixtureCoeff] = EM(N, data)
         
         %%% Maximization step
         Nk = sum(postProb);
-        if any(isnan(Nk)) || ~all(isreal(Nk))
-            disp('The covariance is ill-conditioned')
-            mu = [];
-            sigma = [];
-            mixtureCoeff = [];
-            break;
-        end
         for i = 1:N
             if Nk(i) == 0
                 continue;
@@ -70,18 +62,18 @@ function [mu, sigma, mixtureCoeff] = EM(N, data)
             % Compute new mean
             mu(i,:) = sum(postProb(:,i).*data)/Nk(i);
             % Compute new variance
-            sigma(i,:,:) = (sqrt(postProb(:,i)).*(data - mu(i,:)))'*(sqrt(postProb(:,i)).*(data - mu(i,:)))/Nk(i);
+            sigma(:,:,i) = (sqrt(postProb(:,i)).*(data - mu(i,:)))'*(sqrt(postProb(:,i)).*(data - mu(i,:)))/Nk(i);
             % Compute new mixture coefficient
-            mixtureCoeff(i) = Nk(i)/sum(Nk(i));
+            mixtureCoeff(i) = Nk(i)/sum(Nk);
         end
     end
+    gmObj = gmdistribution(mu,sigma,mixtureCoeff);
 
 end
 
 function N = gauss(x, mu, sigma)
 % This function computes N(x|mu,sigma)
 
-    sigma = reshape(sigma,[size(sigma,2) size(sigma,3)]);
     N = (1/(2*pi)^(size(x,2)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
     if isnan(N)
         disp('The covariance is ill-conditioned')

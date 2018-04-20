@@ -46,81 +46,128 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % end
 % close(vidObj)
 
-% Create data using 3 1-D gaussians
-data = cat(3,linspace(10,30)',linspace(30,50)',linspace(50,70)');
-mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
-sigma = [std(data(:,:,1));std(data(:,:,2));std(data(:,:,3))];
-X = [data(:,:,1); data(:,:,2); data(:,:,3)];
-X = sort(X);
-figure('units','normalized','outerposition',[0 0 1 1])
-Y = (normpdf(X,mu(1),sqrt(sigma(1))) + normpdf(X,mu(2),sqrt(sigma(2))) + normpdf(X,mu(3),sqrt(sigma(3))))/3;
-plot(X,Y)
-hold on
-% Use EM to retrieve the three gaussians used
-[new_mu,new_sigma,new_mixtureCoeff] = EM(3,X);
-for i = 1:300
-    for j = 1:3
-        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
-    end
-end
-plot(X,sum(postProb,2))
-hold off
-xlabel('Data Points')
-ylabel('Probability')
-title('Probability Distribution')
-legend('Actual PDF','Derived PDF')
-saveas(gcf,'..\output\EM1D3N.jpg')
+% % Create data using 3 1-D gaussians
+% data = cat(3,linspace(10,30)',linspace(30,50)',linspace(50,70)');
+% mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
+% sigma = cat(3,var(data(:,:,1)),var(data(:,:,2)),var(data(:,:,3)));
+% X = [data(:,:,1); data(:,:,2); data(:,:,3)];
+% X = sort(X);
+% figure('units','normalized','outerposition',[0 0 1 1])
+% gmObj = gmdistribution(mu,sigma);
+% Y = pdf(gmObj,X);
+% plot(X,Y)
+% hold on
+% % Use EM to retrieve the three gaussians used
+% gmObj_1D3N = EM(X,3);
+% Y_1D3N = pdf(gmObj_1D3N,X);
+% plot(X,Y_1D3N)
+% hold off
+% xlabel('Data Points')
+% ylabel('Probability')
+% title('Probability Distribution')
+% legend('Actual PDF','Derived PDF')
+% saveas(gcf,'..\output\EM1D3N.jpg')
+% 
+% % Plot the data generated using 3 1-D gaussians again
+% figure('units','normalized','outerposition',[0 0 1 1])
+% plot(X,Y)
+% hold on
+% % Use EM to retrieve four gaussians instead of three
+% gmObj_1D4N = EM(X,4);
+% Y_1D4N = pdf(gmObj_1D4N,X);
+% plot(X,Y_1D4N)
+% hold off
+% xlabel('Data Points')
+% ylabel('Probability')
+% title('Probability Distribution')
+% legend('Actual PDF','Derived PDF')
+% saveas(gcf,'..\output\EM1D4N.jpg')
 
-% Plot the data generated using 3 1-D gaussians again
-figure('units','normalized','outerposition',[0 0 1 1])
-plot(X,Y)
+
+title('Contour lines of pdf');
+
+
+Generate 1000 random variates from the GMM.
+
+rng('default'); % For reproducibility
+X = random(gm,1000);
+Plot the variates with the pdf contours.
+
 hold on
-% Use EM to retrieve four gaussians instead of three
-[new_mu,new_sigma,new_mixtureCoeff] = EM(4,X);
-for i = 1:300
-    for j = 1:4
-        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
-    end
-end
-plot(X,sum(postProb,2))
-hold off
-xlabel('Data Points')
-ylabel('Probability')
-title('Probability Distribution')
-legend('Actual PDF','Derived PDF')
-saveas(gcf,'..\output\EM1D4N.jpg')
+scatter(X(:,1),X(:,2),10,'.') % Scatter plot with points of size 10
+title('Contour lines of pdf and Simulated Data');
+
+
+
+
+
+
+
+
+
+
+
+
 
 % Check if the algorithm works for 3-D gaussian
-data = cat(3,(1 + rand(100,3))*10,(1 + rand(100,3))*20,(1 + rand(100,3))*30);
+data = cat(3,(1 + rand(100,2))*125,(1 + rand(100,2))*255,(1 + rand(100,2))*200);
 mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
 sigma = cat(3,cov(data(:,:,1)),cov(data(:,:,2)),cov(data(:,:,3)));
 X = [data(:,:,1); data(:,:,2); data(:,:,3)];
 X = sort(X);
-mixtureCoeff = ones(3,1)/3;
-for i = 1:300
-    for j = 1:3
-        postProb(i,j) = mixtureCoeff(j)*gauss(X(i,:),mu(j,:),sigma(j,:,:));
-    end
-end
-figure('units','normalized','outerposition',[0 0 1 1])
-scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+gmObj = gmdistribution(mu,sigma);
+gmPDF = @(x,y)pdf(gmObj,[x y]);
+ezcontour(gmPDF,[0 500],[0 500]);
+Xtemp = random(gmObj,300);
 hold on
-[new_mu,new_sigma,new_mixtureCoeff] = EM(3,X);
-for i = 1:300
-    for j = 1:3
-        postProb(i,j) = new_mixtureCoeff(j)*gauss(X(i,:),new_mu(j,:),new_sigma(j,:,:));
-    end
-end
-scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+scatter(X(:,1),X(:,2),10,'.')
+
 hold off
-xlabel('X - Data Points')
-ylabel('Y - Data Points')
-zlabel('Z - Data Points')
-cb = colorbar;
-cb.Label.String = 'Probability';
-title('Probability Distribution')
-legend('Actual PDF','Derived PDF')
-saveas(gcf,'..\output\EM3D3N.jpg')
+
+% Y = pdf(gmObj,X);
+% figure('units','normalized','outerposition',[0 0 1 1])
+% plot3(X(:,1),X(:,2),Y)
+% hold on
+% % subplot(1,2,3)
+% % plot(X(:,3),Y)
+% % hold on
+% % 
+% % fimplicit3(@(x,y,z)pdf(gmObj,[x, y, z]),[0 10 0 20 0 30])
+% % scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+gmObj_2D3N = EM(X,3);
+gmPDF = @(x,y)pdf(gmObj_2D3N,[x y]);
+ezcontour(gmPDF,[0 500],[0 500]);
+
+% Y_2D3N = pdf(gmObj_2D3N,X);
+% plot3(X(:,1),X(:,2),Y_2D3N)
+% % hold on
+% % subplot(1,2,2)
+% % plot3(X(:,2),X(:,3),Y_3D3N)
+% % hold on
+% % subplot(2,2,3)
+% % plot(X(:,3),Y_3D3N)
+% % hold on
+gmm = fitgmdist(X,3,'Options',statset('MaxIter',1500));
+gmPDF = @(x,y)pdf(gmm,[x y]);
+fcontour(gmPDF,[0 255 0 255]);
+% Ygmm = pdf(gmm,X);
+% plot3(X(:,1),X(:,2),Ygmm)
+% % subplot(1,2,2)
+% % plot3(X(:,2),X(:,3),Ygmm)
+% % subplot(2,2,3)
+% % plot(X(:,3),Ygmm)
+% plot(X,Ygmm)
+% scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
+% hold off
+% xlabel('X - Data Points')
+% ylabel('Y - Data Points')
+% zlabel('Z - Data Points')
+% cb = colorbar;
+% cb.Label.String = 'Probability';
+% title('Probability Distribution')
+% legend('Actual PDF','Derived PDF')
+% % saveas(gcf,'..\output\EM3D3N.jpg')
+% gmm = fitgmdist(X,3);
 
 
 
