@@ -48,13 +48,17 @@ function gmObj = EM(data, N)
         likelihood = sum(log(sum(prob,2)));
         % Compute difference
         likelihoodDiff = likelihood - oldLikelihood;
-        if (likelihoodDiff >= 0)&&(likelihoodDiff < 1e-6)
+        if (likelihoodDiff >= 0)&&(likelihoodDiff < abs(likelihood)*1e-6)
             break;
         end
         oldLikelihood = likelihood;
         
         %%% Maximization step
         Nk = sum(postProb);
+        if any(isnan(Nk)) || ~all(isreal(Nk))
+            gmObj = gmdistribution;
+            return
+        end
         for i = 1:N
             if Nk(i) == 0
                 continue;
