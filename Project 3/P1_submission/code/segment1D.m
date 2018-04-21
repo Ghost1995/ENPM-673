@@ -2,10 +2,9 @@
 % This code computes average histogram for individual colors
 % 
 % Input:
-%   colorSpace --> Color space to be used
-%        frame --> Location of the images of the buoy
-%    plotGauss --> States whether to plot the gaussian used or not
-%    saveFrame --> States whether to save the segmented frames or not
+%         var --> Mean and standard deviation for the three buoys
+%       frame --> Location of the images of the buoy
+%   saveFrame --> States whether to save the segmented frames or not
 % 
 % Output:
 %   I --> Segmented image
@@ -13,49 +12,8 @@
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
+function I = segment1D(var, frame, saveFrame)
 
-    % Get color distributions
-    greenDist = []; redDist = []; yellowDist = [];
-    try
-        load(['..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
-    catch
-        disp('Color Distributions not found. First compute them using averageHistogram.m')
-        I = [];
-        return
-    end
-    
-    % Generate 1-D gaussian for green buoy
-    [greenMean,greenSigma] = normfit(greenDist(:,2));
-    % Generate 1-D gaussian for red buoy
-    [redMean,redSigma] = normfit(redDist(:,1));
-    % Generate 1-D gaussian for yellow buoy
-    [yellowMean,yellowSigma] = normfit(mean(yellowDist(:,1:2),2));
-    
-    % Plot the three gaussians if asked
-    if plotGauss
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,normpdf(0:255,greenMean,greenSigma))
-        title('1-D Gaussian to Detect Green Buoy')
-        xlabel('Intensity')
-        ylabel('Probability')
-        saveas(gcf,'../output/G_gauss1D.jpg')
-        
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,normpdf(0:255,redMean,redSigma))
-        title('1-D Gaussian to Detect Red Buoy')
-        xlabel('Intensity')
-        ylabel('Probability')
-        saveas(gcf,'../output/R_gauss1D.jpg')
-        
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,normpdf(0:255,yellowMean,yellowSigma))
-        title('1-D Gaussian to Detect Yellow Buoy')
-        xlabel('Intensity')
-        ylabel('Probability')
-        saveas(gcf,'../output/Y_gauss1D.jpg')
-    end
-    
     % Read the image
     I = imread(frame);
     I_green = double(I(:,:,2));
@@ -68,9 +26,9 @@ function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
     yellowProb = zeros(size(I_yellow));
     for i = 1:size(I,1)
         for j = 1:size(I,2)
-            greenProb(i,j) = (1/sqrt(2*pi*greenSigma^2))*exp(-(1/(2*greenSigma^2))*(I_green(i,j) - greenMean)^2);
-            redProb(i,j) = (1/sqrt(2*pi*redSigma^2))*exp(-(1/(2*redSigma^2))*(I_red(i,j) - redMean)^2);
-            yellowProb(i,j) = (1/sqrt(2*pi*yellowSigma^2))*exp(-(1/(2*yellowSigma^2))*(I_yellow(i,j) - yellowMean)^2);
+            greenProb(i,j) = (1/sqrt(2*pi*var(1,2)^2))*exp(-(1/(2*var(1,2)^2))*(I_green(i,j) - var(1,1))^2);
+            redProb(i,j) = (1/sqrt(2*pi*var(2,2)^2))*exp(-(1/(2*var(2,2)^2))*(I_red(i,j) - var(2,1))^2);
+            yellowProb(i,j) = (1/sqrt(2*pi*var(3,2)^2))*exp(-(1/(2*var(3,2)^2))*(I_yellow(i,j) - var(3,1))^2);
         end
     end
     
@@ -223,4 +181,5 @@ function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
     if saveFrame
         imwrite(I,['../output/seg_' frame(end-6:end)]);
     end
+
 end

@@ -201,11 +201,6 @@ function colorModels_test(colorSpace, plotPath, Nmax, D)
         rgYellowHist = rgYellowHist/length(yellowDist);
         gbYellowHist = gbYellowHist/length(yellowDist);
         rbYellowHist = rbYellowHist/length(yellowDist);
-        data = 0:255;
-        data = repmat(data',256,1);
-        for i = 0:255
-            data(i*256+1:(i+1)*256,2) = i;
-        end
         for N = 1:Nmax
             figure('units','normalized','outerposition',[0 0 1 1])
             bar3(0:255,rgGreenHist','y');

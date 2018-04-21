@@ -26,19 +26,40 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % % Compute average histogram as well as the color distribution
 % averageHistogram(trainFolder,cropFolder,'RGB')
 
+% % Get color distributions
+% greenDist = []; redDist = []; yellowDist = [];
+% load('..\output\colorDistributions_RGB.mat','greenDist','redDist','yellowDist')
+% [var(1,1),var(1,2)] = normfit(greenDist(:,2));
+% [var(2,1),var(2,2)] = normfit(redDist(:,1));
+% [var(3,1),var(3,2)] = normfit(mean(yellowDist(:,1:2),2));
+% % Plot the three gaussians if asked
+% figure('units','normalized','outerposition',[0 0 1 1])
+% plot(0:255,normpdf(0:255,var(1,1),var(1,2)))
+% title('1-D Gaussian to Detect Green Buoy')
+% xlabel('Intensity')
+% ylabel('Probability')
+% saveas(gcf,'../output/G_gauss1D.jpg')
+% plot(0:255,normpdf(0:255,var(2,1),var(2,2)))
+% title('1-D Gaussian to Detect Red Buoy')
+% xlabel('Intensity')
+% ylabel('Probability')
+% saveas(gcf,'../output/R_gauss1D.jpg')
+% plot(0:255,normpdf(0:255,var(3,1),var(3,2)))
+% title('1-D Gaussian to Detect Yellow Buoy')
+% xlabel('Intensity')
+% ylabel('Probability')
+% saveas(gcf,'../output/Y_gauss1D.jpg')
 % % Create video of segmented images using 1-D gaussian
 % vidObj = VideoWriter('..\output\segment1D.mp4','MPEG-4');
 % vidObj.Quality = 100;
 % open(vidObj)
-% count = 1;
+% count = 0;
 % for i = 1:length(testFiles)+length(trainFiles)
-%     if i == 1
-%         I = segment1D('RGB',[trainFolder trainFiles(1).name],true,false);
-%     elseif rem(i,10) == 1
+%     if rem(i,10) == 1
 %         count = count + 1;
-%         I = segment1D('RGB',[trainFolder trainFiles(count).name],false,false);
+%         I = segment1D(var,[trainFolder trainFiles(count).name],false);
 %     else
-%         I = segment1D('RGB',[testFolder testFiles(i-count).name],false,false);
+%         I = segment1D(var,[testFolder testFiles(i-count).name],false);
 %     end
 %     for j = 1:6
 %         writeVideo(vidObj,I)
@@ -92,7 +113,23 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % Generate 2-D gaussians for each buoy
 % colorModels_test('RGB','..\output\ColorModels_test\',5,2);
 
-% 
+% Create video of segmented images using gaussians generated from EM
+% vidObj = VideoWriter('..\output\segment1D.mp4','MPEG-4');
+% vidObj.Quality = 100;
+% open(vidObj)
+count = 0;
+for i = 1:length(testFiles)+length(trainFiles)
+    if rem(i,10) == 1
+        count = count + 1;
+        I = detectBuoy(gmObjs,[trainFolder trainFiles(count).name],false);
+    else
+        I = detectBuoy(gmObjs,[testFolder testFiles(i-count).name],false);
+    end
+%     for j = 1:6
+%         writeVideo(vidObj,I)
+%     end
+end
+% close(vidObj)
 
 
 
@@ -102,65 +139,7 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 
 
 
-% Check if the algorithm works for 3-D gaussian
-data = cat(3,(1 + rand(100,2))*125,(1 + rand(100,2))*255,(1 + rand(100,2))*200);
-mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
-sigma = cat(3,cov(data(:,:,1)),cov(data(:,:,2)),cov(data(:,:,3)));
-X = [data(:,:,1); data(:,:,2); data(:,:,3)];
-X = sort(X);
-gmObj = gmdistribution(mu,sigma);
-gmPDF = @(x,y)pdf(gmObj,[x y]);
-ezcontour(gmPDF,[0 500],[0 500]);
-Xtemp = random(gmObj,300);
-hold on
-scatter(X(:,1),X(:,2),10,'.')
 
-hold off
-
-% Y = pdf(gmObj,X);
-% figure('units','normalized','outerposition',[0 0 1 1])
-% plot3(X(:,1),X(:,2),Y)
-% hold on
-% % subplot(1,2,3)
-% % plot(X(:,3),Y)
-% % hold on
-% % 
-% % fimplicit3(@(x,y,z)pdf(gmObj,[x, y, z]),[0 10 0 20 0 30])
-% % scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
-gmObj_2D3N = EM(X,3);
-gmPDF = @(x,y)pdf(gmObj_2D3N,[x y]);
-ezcontour(gmPDF,[0 500],[0 500]);
-
-% Y_2D3N = pdf(gmObj_2D3N,X);
-% plot3(X(:,1),X(:,2),Y_2D3N)
-% % hold on
-% % subplot(1,2,2)
-% % plot3(X(:,2),X(:,3),Y_3D3N)
-% % hold on
-% % subplot(2,2,3)
-% % plot(X(:,3),Y_3D3N)
-% % hold on
-gmm = fitgmdist(X,3,'Options',statset('MaxIter',1500));
-gmPDF = @(x,y)pdf(gmm,[x y]);
-fcontour(gmPDF,[0 255 0 255]);
-% Ygmm = pdf(gmm,X);
-% plot3(X(:,1),X(:,2),Ygmm)
-% % subplot(1,2,2)
-% % plot3(X(:,2),X(:,3),Ygmm)
-% % subplot(2,2,3)
-% % plot(X(:,3),Ygmm)
-% plot(X,Ygmm)
-% scatter3(X(:,1),X(:,2),X(:,3),40,sum(postProb,2),'filled')
-% hold off
-% xlabel('X - Data Points')
-% ylabel('Y - Data Points')
-% zlabel('Z - Data Points')
-% cb = colorbar;
-% cb.Label.String = 'Probability';
-% title('Probability Distribution')
-% legend('Actual PDF','Derived PDF')
-% % saveas(gcf,'..\output\EM3D3N.jpg')
-% gmm = fitgmdist(X,3);
 
 
 
