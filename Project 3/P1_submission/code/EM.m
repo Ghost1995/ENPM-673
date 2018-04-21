@@ -7,13 +7,14 @@
 %      N --> Number of Gaussians
 % 
 % Output:
-%   gmObj --> Gaussian Mixture Object. It contains the mean (N x D), 
-%             covariance (D x D x N), and mixture coefficients (N x 1)
+%         gmObj --> Gaussian Mixture Object. It contains the mean (N x D), 
+%                  covariance (D x D x N), and mixture coefficients (N x 1)
+%   isConverged --> Flag for checking ill-conditioned variance.
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function gmObj = EM(data, N)
+function [gmObj, isConverged] = EM(data, N)
 
     % Ensure data is in the desired format
     if size(data,1) < size(data,2)
@@ -31,6 +32,7 @@ function gmObj = EM(data, N)
     
     % Start E-M
     oldLikelihood = -Inf;
+    lastwarn('');
     while true
         %%% Estimation step
         % Compute all probabilities
@@ -38,6 +40,11 @@ function gmObj = EM(data, N)
         for i = 1:numSamples
             for j = 1:N
                 prob(i,j) = mixtureCoeff(j)*gauss(data(i,:),mu(j,:),sigma(:,:,j));
+                if prob(i,j) == Inf || ~isempty(lastwarn)
+                    gmObj = gmdistribution;
+                    isConverged = false;
+                    return
+                end
             end
         end
         % Compute posterior probability
@@ -49,16 +56,13 @@ function gmObj = EM(data, N)
         % Compute difference
         likelihoodDiff = likelihood - oldLikelihood;
         if (likelihoodDiff >= 0)&&(likelihoodDiff < abs(likelihood)*1e-6)
+            isConverged = true;
             break;
         end
         oldLikelihood = likelihood;
         
         %%% Maximization step
         Nk = sum(postProb);
-        if any(isnan(Nk)) || ~all(isreal(Nk))
-            gmObj = gmdistribution;
-            return
-        end
         for i = 1:N
             if Nk(i) == 0
                 continue;
@@ -80,8 +84,7 @@ function N = gauss(x, mu, sigma)
 
     N = (1/(2*pi)^(size(x,2)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
     if isnan(N)
-        disp('The covariance is ill-conditioned')
-        N = 0;
+        N = Inf;
     end
     
 end

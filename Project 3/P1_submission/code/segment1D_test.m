@@ -12,7 +12,7 @@
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function I = segment1D_test(colorSpace, frame, plot_gauss)
+function I = segment1D_test(colorSpace, frame, plotGauss, saveFrame)
 
     % Get color distributions
     greenDist = []; redDist = []; yellowDist = [];
@@ -33,12 +33,12 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
 %     redMean = mean(redDist(:,1));
 %     redSigma = var(redDist(:,1));
     % Generate 1-D gaussian for yellow buoy
-    [yellowMean,yellowSigma] = normfit(mean(yellowDist(:,1:2),2));
+    [yellowMean,yellowSigma] = normfit(yellowDist(:,1),2);
 %     yellowMean = mean(mean(yellowDist(:,1:2),2));
 %     yellowSigma = var(mean(yellowDist(:,1:2),2));
     
     % Plot the three gaussians if asked
-    if plot_gauss
+    if plotGauss
         figure('units','normalized','outerposition',[0 0 1 1])
         plot(0:255,normpdf(0:255,greenMean,greenSigma))
         title('1-D Gaussian to Detect Green Buoy')
@@ -65,7 +65,7 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
     I = imread(frame);
     I_green = double(I(:,:,2));
     I_red = double(I(:,:,1));
-    I_yellow = mean(double(I(:,:,1:2)),3);
+    I_yellow = double(I(:,:,1));
     
     % Compute gaussian probabilities
     greenProb = zeros(size(I_green));
@@ -80,9 +80,15 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
     end
     
     % Identify green buoy
-    greenBuoy = greenProb > std2(greenProb);
-    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',5),'holes'),'thin',8),[300 700]);
-    greenProperty = regionprops(greenBuoy);
+%     greenBuoy = greenProb > std2(greenProb);
+%     greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close'),'holes'),'thin',9),[125 525]);
+%     greenProperty = regionprops(greenBuoy);
+%     
+%     greenBuoy = bwareafilt(imfill(bwmorph(bwmorph(greenBuoy,'clean',5),'close',10),'holes'),[100 700]);
+%     greenProperty = regionprops(greenBuoy);
+    
+%     greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',5),'holes'),'thin',8),[300 700]);
+%     greenProperty = regionprops(greenBuoy);
 %     greenArea = [];
 %     greenInd = [];
 %     for i = 1:length(greenProperty)
@@ -102,9 +108,14 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
 %     end
     
     % Identify red buoy
-    redBuoy = redProb > std2(redProb);
-    redBuoy = bwareafilt(imfill(bwmorph(bwmorph(redBuoy,'clean',5),'close',5),'holes'),[250 6000]);
-    redProperty = regionprops(redBuoy);
+%     redBuoy = redProb > std2(redProb);
+%     redBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(redBuoy,'thicken',10),'close'),'holes'),'thin',9),[400 5500]);
+%     redProperty = regionprops(redBuoy);
+%     redBuoy = bwareafilt(imfill(bwmorph(bwmorph(redBuoy,'clean',5),'close',10),'holes'),[100 5500]);
+%     redProperty = regionprops(redBuoy);
+    
+%     redBuoy = bwareafilt(imfill(bwmorph(bwmorph(redBuoy,'clean',5),'close',5),'holes'),[250 6000]);
+%     redProperty = regionprops(redBuoy);
 %     redArea = [];
 %     redInd = [];
 %     for i = 1:length(redProperty)
@@ -124,9 +135,17 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
 %     end
     
     % Identify yellow buoy
-    yellowBuoy = yellowProb > 2*std2(yellowProb);
-    yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close',5),'holes'),[400 4000]);
+    yellowBuoy = yellowProb > std2(yellowProb);
+%     yellowBuoy = bwareafilt(yellowBuoy,[50 5000]);
+%     yellowProperty = regionprops(yellowBuoy);
+    imshow(yellowBuoy)
+    yellowBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(yellowBuoy,'thicken',3),'close'),'holes'),'thin',2),[100 5500]);
+%     bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close'),'holes'),[400 4000]);
+%     yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close',10),'holes'),[100 4000]);
     yellowProperty = regionprops(yellowBuoy);
+    
+%     yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close',5),'holes'),[400 4000]);
+%     yellowProperty = regionprops(yellowBuoy);
 %     yellowArea = [];
 %     yellowInd = [];
 %     for i = 1:length(yellowProperty)
@@ -347,8 +366,8 @@ function I = segment1D_test(colorSpace, frame, plot_gauss)
     
 %     % Plot the image before saving it
     imshow(I)
-    imshow(greenBuoy)
-    imshow(redBuoy)
+%     imshow(greenBuoy)
+%     imshow(redBuoy)
     imshow(yellowBuoy)
 %     imwrite(I,['../output/seg_' frame(end-6:end)]);
 end

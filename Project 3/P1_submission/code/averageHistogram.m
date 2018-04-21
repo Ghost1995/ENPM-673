@@ -160,5 +160,6 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
     
     % Save the color distributions
     save(['..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+    save(['..\output\colorHistograms_' colorSpace '.mat'],'greenHist','redHist','yellowHist')
 
 end

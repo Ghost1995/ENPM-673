@@ -58,86 +58,45 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % plot(X,Y)
 % hold on
 % % Use EM to retrieve the three gaussians used
-% gmObj_1D3N = EM(X,3);
-% Y_1D3N = pdf(gmObj_1D3N,X);
-% plot(X,Y_1D3N)
+% [gmObj_1D3N,isConverged] = EM(X,3);
+% if isConverged
+%     Y_1D3N = pdf(gmObj_1D3N,X);
+%     plot(X,Y_1D3N)
+%     xlabel('Data Points')
+%     ylabel('Probability')
+%     title('Probability Distribution')
+%     legend('Actual PDF','Derived PDF')
+%     saveas(gcf,'..\output\EM1D3N.jpg')
+% end
 % hold off
-% xlabel('Data Points')
-% ylabel('Probability')
-% title('Probability Distribution')
-% legend('Actual PDF','Derived PDF')
-% saveas(gcf,'..\output\EM1D3N.jpg')
 % 
 % % Plot the data generated using 3 1-D gaussians again
 % figure('units','normalized','outerposition',[0 0 1 1])
 % plot(X,Y)
 % hold on
 % % Use EM to retrieve four gaussians instead of three
-% gmObj_1D4N = EM(X,4);
-% Y_1D4N = pdf(gmObj_1D4N,X);
-% plot(X,Y_1D4N)
-% hold off
-% xlabel('Data Points')
-% ylabel('Probability')
-% title('Probability Distribution')
-% legend('Actual PDF','Derived PDF')
-% saveas(gcf,'..\output\EM1D4N.jpg')
-
-
-% title('Contour lines of pdf');
-% 
-% 
-% Generate 1000 random variates from the GMM.
-% 
-% rng('default'); % For reproducibility
-% X = random(gm,1000);
-% Plot the variates with the pdf contours.
-% 
-% hold on
-% scatter(X(:,1),X(:,2),10,'.') % Scatter plot with points of size 10
-% title('Contour lines of pdf and Simulated Data');
-% 
-
-
-
-
-% for N = 5
-% figure('units','normalized','outerposition',[0 0 1 1])
-% bar(0:255,redHist(:,1),'r');
-% hold on
-% redDist_red = double(sort(redDist(:,1)));
-% redObj_red = EM(redDist_red,N);
-% redY_red = pdf(redObj_red,redDist_red);
-% plot(redDist_red,redY_red)
-% xlabel('Intensity')
-% ylabel('Frequency')
-% title(['Red Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-% saveas(gcf,['..\output\redGauss_red_' num2str(N) '.jpg']);
-% 
-% figure('units','normalized','outerposition',[0 0 1 1])
-% bar(0:255,redHist(:,2),'g');
-% hold on
-% redDist_green = double(sort(redDist(:,2)));
-% redObj_green = EM(redDist_green,N);
-% redY_green = pdf(redObj_green,redDist_green);
-% plot(redDist_green,redY_green)
-% xlabel('Intensity')
-% ylabel('Frequency')
-% title(['Green Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-% saveas(gcf,['..\output\redGauss_green_' num2str(N) '.jpg']);
-% 
-% figure('units','normalized','outerposition',[0 0 1 1])
-% bar(0:255,redHist(:,3),'b');
-% hold on
-% redDist_blue = double(sort(redDist(:,3)));
-% redObj_blue = EM(redDist_blue,N);
-% redY_blue = pdf(redObj_blue,redDist_blue);
-% plot(redDist_blue,redY_blue,'r')
-% xlabel('Intensity')
-% ylabel('Frequency')
-% title(['Blue Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-% saveas(gcf,['..\output\redGauss_blue_' num2str(N) '.jpg']);
+% [gmObj_1D4N,isConverged] = EM(X,4);
+% if isConverged
+%     Y_1D4N = pdf(gmObj_1D4N,X);
+%     plot(X,Y_1D4N)
+%     xlabel('Data Points')
+%     ylabel('Probability')
+%     title('Probability Distribution')
+%     legend('Actual PDF','Derived PDF')
+%     saveas(gcf,'..\output\EM1D4N.jpg')
 % end
+% hold off
+
+% Generate 1-D gaussians for each buoy
+% colorModels_test('RGB','..\output\ColorModels_test\',5,1);
+% Generate 2-D gaussians for each buoy
+% colorModels_test('RGB','..\output\ColorModels_test\',5,2);
+
+% 
+
+
+
+
 
 
 

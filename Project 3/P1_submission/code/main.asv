@@ -47,26 +47,26 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 % close(vidObj)
 
 % % Create data using 3 1-D gaussians
-% data = cat(3,linspace(10,30)',linspace(30,50)',linspace(50,70)');
-% mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
-% sigma = cat(3,var(data(:,:,1)),var(data(:,:,2)),var(data(:,:,3)));
-% X = [data(:,:,1); data(:,:,2); data(:,:,3)];
-% X = sort(X);
-% figure('units','normalized','outerposition',[0 0 1 1])
-% gmObj = gmdistribution(mu,sigma);
-% Y = pdf(gmObj,X);
-% plot(X,Y)
-% hold on
-% % Use EM to retrieve the three gaussians used
-% gmObj_1D3N = EM(X,3);
-% Y_1D3N = pdf(gmObj_1D3N,X);
-% plot(X,Y_1D3N)
-% hold off
-% xlabel('Data Points')
-% ylabel('Probability')
-% title('Probability Distribution')
-% legend('Actual PDF','Derived PDF')
-% saveas(gcf,'..\output\EM1D3N.jpg')
+data = cat(3,linspace(10,30)',linspace(30,50)',linspace(50,70)');
+mu = [mean(data(:,:,1));mean(data(:,:,2));mean(data(:,:,3))];
+sigma = cat(3,var(data(:,:,1)),var(data(:,:,2)),var(data(:,:,3)));
+X = [data(:,:,1); data(:,:,2); data(:,:,3)];
+X = sort(X);
+figure('units','normalized','outerposition',[0 0 1 1])
+gmObj = gmdistribution(mu,sigma);
+Y = pdf(gmObj,X);
+plot(X,Y)
+hold on
+% Use EM to retrieve the three gaussians used
+gmObj_1D3N = EM(X,3);
+Y_1D3N = pdf(gmObj_1D3N,X);
+plot(X,Y_1D3N)
+hold off
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution')
+legend('Actual PDF','Derived PDF')
+saveas(gcf,'..\output\EM1D3N.jpg')
 % 
 % % Plot the data generated using 3 1-D gaussians again
 % figure('units','normalized','outerposition',[0 0 1 1])
@@ -101,43 +101,7 @@ cropFolder = '..\input\Images\TrainingSet\CroppedBuoys\';
 
 
 
-for N = 3:4
-figure('units','normalized','outerposition',[0 0 1 1])
-bar(0:255,redHist(:,1),'r');
-hold on
-redDist_red = double(sort(redDist(:,1)));
-redObj_red = EM(redDist_red,N);
-redY_red = pdf(redObj_red,redDist_red);
-plot(redDist_red,redY_red)
-xlabel('Intensity')
-ylabel('Frequency')
-title(['Red Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-saveas(gcf,['..\output\redGauss_red_' num2str(N) '.jpg']);
 
-% figure('units','normalized','outerposition',[0 0 1 1])
-% bar(0:255,redHist(:,2),'g');
-% hold on
-% redDist_green = double(sort(redDist(:,2)));
-% redObj_green = EM(redDist_green,N);
-% redY_green = pdf(redObj_green,redDist_green);
-% plot(redDist_green,redY_green)
-% xlabel('Intensity')
-% ylabel('Frequency')
-% title(['Green Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-% saveas(gcf,['..\output\redGauss_green_' num2str(N) '.jpg']);
-% 
-% figure('units','normalized','outerposition',[0 0 1 1])
-% bar(0:255,redHist(:,3),'b');
-% hold on
-% redDist_blue = double(sort(redDist(:,3)));
-% redObj_blue = EM(redDist_blue,N);
-% redY_blue = pdf(redObj_blue,redDist_blue);
-% plot(redDist_blue,redY_blue,'r')
-% xlabel('Intensity')
-% ylabel('Frequency')
-% title(['Blue Color Band of Green Buoy represented by ' num2str(N) ' Gaussians'])
-% saveas(gcf,['..\output\redGauss_blue_' num2str(N) '.jpg']);
-end
 
 
 

@@ -4,7 +4,7 @@
 % Input:
 %   colorSpace --> Color space to be used
 %        frame --> Location of the images of the buoy
-%   plot_gauss --> States whether to plot the gaussian used or not
+%    plotGauss --> States whether to plot the gaussian used or not
 %    saveFrame --> States whether to save the segmented frames or not
 % 
 % Output:
@@ -76,7 +76,7 @@ function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
     
     % Identify green buoy
     greenBuoy = greenProb > std2(greenProb);
-    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close',10),'holes'),'thin',8),[150 700]);
+    greenBuoy = bwareafilt(bwmorph(imfill(bwmorph(bwmorph(greenBuoy,'thicken',10),'close'),'holes'),'thin',8),[150 700]);
     greenProperty = regionprops(greenBuoy);
     greenArea = [];
     greenInd = [];
@@ -98,7 +98,7 @@ function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
     
     % Identify red buoy
     redBuoy = redProb > std2(redProb);
-    redBuoy = bwareafilt(imfill(bwmorph(bwmorph(redBuoy,'clean',5),'close',10),'holes'),[250 5500]);
+    redBuoy = bwareafilt(imfill(bwmorph(bwmorph(redBuoy,'clean',5),'close'),'holes'),[250 5500]);
     redProperty = regionprops(redBuoy);
     redArea = [];
     redInd = [];
@@ -120,7 +120,7 @@ function I = segment1D(colorSpace, frame, plotGauss, saveFrame)
     
     % Identify yellow buoy
     yellowBuoy = yellowProb > 2*std2(yellowProb);
-    yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close',10),'holes'),[400 4000]);
+    yellowBuoy = bwareafilt(imfill(bwmorph(bwmorph(yellowBuoy,'clean',5),'close'),'holes'),[400 4000]);
     yellowProperty = regionprops(yellowBuoy);
     yellowArea = [];
     yellowInd = [];
