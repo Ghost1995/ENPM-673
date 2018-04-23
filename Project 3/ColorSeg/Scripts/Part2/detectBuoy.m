@@ -177,8 +177,8 @@ function I = detectBuoy(gmObjs, frame)
     end
     
     % Save the image
-    imwrite(greenBuoy | redBuoy | yellowBuoy,['..\..\Output\Part3\binary_' frame(end-6:end)]);
-    imwrite(I,['..\..\Output\Part3\Frames\out_' frame(end-6:end)]);
+    imwrite(greenBuoy | redBuoy | yellowBuoy,['.\ColorSeg\Output\Part3\binary_' frame(end-6:end)]);
+    imwrite(I,['.\ColorSeg\Output\Part3\Frames\out_' frame(end-6:end)]);
 
 end
 

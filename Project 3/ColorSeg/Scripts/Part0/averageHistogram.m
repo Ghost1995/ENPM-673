@@ -131,10 +131,9 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         xlabel('Intensity')
         ylabel('Frequency')
         title('Normalized Average Histogram for Green Buoy');
-        saveas(gcf,'..\..\Output\Part0\G_hist.jpg');
+        saveas(gcf,'.\ColorSeg\Output\Part0\G_hist.jpg');
         
         % Save image of the histogram for red buoy
-        figure('units','normalized','outerposition',[0 0 1 1])
         bar(0:255,redHist(:,3),'b');
         hold on
         bar(0:255,redHist(:,2),'g');
@@ -143,10 +142,9 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         title('Normalized Average Histogram for Red Buoy');
         xlabel('Intensity')
         ylabel('Frequency')
-        saveas(gcf,'..\..\Output\Part0\R_hist.jpg');
+        saveas(gcf,'.\ColorSeg\Output\Part0\R_hist.jpg');
         
         % Save image of the histogram for yellow buoy
-        figure('units','normalized','outerposition',[0 0 1 1])
         bar(0:255,yellowHist(:,3),'b');
         hold on
         bar(0:255,yellowHist(:,1),'r');
@@ -155,13 +153,13 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         title('Normalized Average Histogram for Yellow Buoy');
         xlabel('Intensity')
         ylabel('Frequency')
-        saveas(gcf,'..\..\Output\Part0\Y_hist.jpg');
+        saveas(gcf,'.\ColorSeg\Output\Part0\Y_hist.jpg');
     end
     
     greenDist = double(greenDist); redDist = double(redDist); yellowDist = double(yellowDist);
     greenHist = double(greenHist); redHist = double(redHist); yellowHist = double(yellowHist);
     % Save the color distributions
-    save(['..\..\Output\Part0\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
-    save(['..\..\Output\Part0\colorHistograms_' colorSpace '.mat'],'greenHist','redHist','yellowHist')
+    save(['.\ColorSeg\Output\Part0\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
+    save(['.\ColorSeg\Output\Part0\colorHistograms_' colorSpace '.mat'],'greenHist','redHist','yellowHist')
 
 end

@@ -170,7 +170,7 @@ function I = segment1D(gmObj, frame)
     end
     
     % Save the image
-    imwrite(I,['..\..\Output\Part0\seg_' frame(end-6:end)]);
+    imwrite(I,['.\ColorSeg\Output\Part0\seg_' frame(end-6:end)]);
 
 end
 

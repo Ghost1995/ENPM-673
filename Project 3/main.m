@@ -4,6 +4,9 @@
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Add all required paths
+addpath('.\ColorSeg\Scripts\Part0','.\ColorSeg\Scripts\Part1','.\ColorSeg\Scripts\Part2')
+
 % Define the folder of training set
 trainFolder = '.\ColorSeg\Images\TrainingSet\Frames\';
 % Read all training image names
@@ -24,11 +27,9 @@ cropFolder = '.\ColorSeg\Images\TrainingSet\CroppedBuoys\';
 % cropImages(trainFolder,cropFolder)
 
 % Compute average histogram as well as the color distribution
-path .\ColorSeg\Scripts\Part0\
 averageHistogram(trainFolder,cropFolder,'RGB')
-cd ..\..\..\
 
-% % Get color distributions
+% Get color distributions
 greenDist = []; redDist = []; yellowDist = [];
 load('.\ColorSeg\Output\Part0\colorDistributions_RGB.mat','greenDist','redDist','yellowDist')
 gmObj_green = gmdistribution(mean(greenDist(:,2)),var(greenDist(:,2)));
@@ -56,7 +57,6 @@ saveas(gcf,'.\ColorSeg\Output\Part0\Y_gauss1D.jpg')
 vidObj = VideoWriter('.\ColorSeg\Output\Part0\segment1D.mp4','MPEG-4');
 vidObj.Quality = 100;
 open(vidObj)
-cd .\ColorSeg\Scripts\Part0\
 count = 0;
 for i = 1:length(testFiles)+length(trainFiles)
     if rem(i,10) == 1
@@ -69,7 +69,6 @@ for i = 1:length(testFiles)+length(trainFiles)
         writeVideo(vidObj,I)
     end
 end
-cd ..\..\..\
 close(vidObj)
 
 % Create data using 3 1-D gaussians
@@ -95,7 +94,6 @@ end
 hold off
 
 % Plot the data generated using 3 1-D gaussians again
-figure('units','normalized','outerposition',[0 0 1 1])
 plot(X,gauss(gmObj,X))
 hold on
 % Use EM to retrieve four gaussians instead of three
@@ -116,42 +114,34 @@ hold off
 % colorModels('RGB','..\output\ColorModels\',1,5,2);
 
 % Generate Gaussian model to be used to model each buoy
-for i = 1:10
+[gmObj_green,isConverged] = EM(greenDist(:,1),2);
+while ~isConverged
     [gmObj_green,isConverged] = EM(greenDist(:,1),2);
-    if isConverged
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,gauss(gmObj_green,(0:255)'))
-        xlabel('Data Points')
-        ylabel('Probability')
-        title('Probability Distribution used for Green Buoy')
-        saveas(gcf,'.\ColorSeg\Output\Part2\EM_G.jpg')
-        break;
-    end
 end
-for i = 1:10
+figure('units','normalized','outerposition',[0 0 1 1])
+plot(0:255,gauss(gmObj_green,(0:255)'))
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution used for Green Buoy')
+saveas(gcf,'.\ColorSeg\Output\Part2\EM_G.jpg')
+[gmObj_red,isConverged] = EM(redDist(:,1),1);
+while ~isConverged
     [gmObj_red,isConverged] = EM(redDist(:,1),1);
-    if isConverged
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,gauss(gmObj_red,(0:255)'))
-        xlabel('Data Points')
-        ylabel('Probability')
-        title('Probability Distribution used for Red Buoy')
-        saveas(gcf,'.\ColorSeg\Output\Part2\EM_R.jpg')
-        break;
-    end
 end
-for i = 1:10
+plot(0:255,gauss(gmObj_red,(0:255)'))
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution used for Red Buoy')
+saveas(gcf,'.\ColorSeg\Output\Part2\EM_R.jpg')
+[gmObj_yellow,isConverged] = EM(yellowDist(:,1),1);
+while ~isConverged
     [gmObj_yellow,isConverged] = EM(yellowDist(:,1),1);
-    if isConverged
-        figure('units','normalized','outerposition',[0 0 1 1])
-        plot(0:255,gauss(gmObj_yellow,(0:255)'))
-        xlabel('Data Points')
-        ylabel('Probability')
-        title('Probability Distribution used for Yellow Buoy')
-        saveas(gcf,'.\ColorSeg\Output\Part2\EM_Y.jpg')
-        break;
-    end
 end
+plot(0:255,gauss(gmObj_yellow,(0:255)'))
+xlabel('Data Points')
+ylabel('Probability')
+title('Probability Distribution used for Yellow Buoy')
+saveas(gcf,'.\ColorSeg\Output\Part2\EM_Y.jpg')
 gmObjs = {gmObj_green; gmObj_red; gmObj_yellow};
 % Create video of segmented images using gaussians generated from EM
 vidObj = VideoWriter('.\ColorSeg\Output\Part3\Video\segmentEM.mp4','MPEG-4');
@@ -161,9 +151,9 @@ count = 0;
 for i = 1:length(testFiles)+length(trainFiles)
     if rem(i,10) == 1
         count = count + 1;
-        I = detectBuoy(gmObjs,[trainFolder trainFiles(count).name],true);
+        I = detectBuoy(gmObjs,[trainFolder trainFiles(count).name]);
     else
-        I = detectBuoy(gmObjs,[testFolder testFiles(i-count).name],true);
+        I = detectBuoy(gmObjs,[testFolder testFiles(i-count).name]);
     end
     for j = 1:6
         writeVideo(vidObj,I)
