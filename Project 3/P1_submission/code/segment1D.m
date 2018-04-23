@@ -1,8 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This code computes average histogram for individual colors
+% This code computes segmented images using 1-D Gaussian models
 % 
 % Input:
-%         var --> Mean and standard deviation for the three buoys
+%       gmObj --> Mean and standard deviation for the three buoys
 %       frame --> Location of the images of the buoy
 %   saveFrame --> States whether to save the segmented frames or not
 % 
@@ -12,25 +12,18 @@
 % Submitted by: Ashwin Goyal (UID - 115526297)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function I = segment1D(var, frame, saveFrame)
+function I = segment1D(gmObj, frame, saveFrame)
 
     % Read the image
     I = imread(frame);
-    I_green = double(I(:,:,2));
-    I_red = double(I(:,:,1));
-    I_yellow = mean(double(I(:,:,1:2)),3);
+    I_green = double(reshape(I(:,:,2),numel(I)/3,1));
+    I_red = double(reshape(I(:,:,1),numel(I)/3,1));
+    I_yellow = double(reshape(mean(I(:,:,1:2),3),numel(I)/3,1));
     
     % Compute gaussian probabilities
-    greenProb = zeros(size(I_green));
-    redProb = zeros(size(I_red));
-    yellowProb = zeros(size(I_yellow));
-    for i = 1:size(I,1)
-        for j = 1:size(I,2)
-            greenProb(i,j) = (1/sqrt(2*pi*var(1,2)^2))*exp(-(1/(2*var(1,2)^2))*(I_green(i,j) - var(1,1))^2);
-            redProb(i,j) = (1/sqrt(2*pi*var(2,2)^2))*exp(-(1/(2*var(2,2)^2))*(I_red(i,j) - var(2,1))^2);
-            yellowProb(i,j) = (1/sqrt(2*pi*var(3,2)^2))*exp(-(1/(2*var(3,2)^2))*(I_yellow(i,j) - var(3,1))^2);
-        end
-    end
+    greenProb = reshape(gauss(gmObj{1},I_green),size(I,1),size(I,2));
+    redProb = reshape(gauss(gmObj{2},I_red),size(I,1),size(I,2));
+    yellowProb = reshape(gauss(gmObj{3},I_yellow),size(I,1),size(I,2));
     
     % Identify green buoy
     greenBuoy = greenProb > std2(greenProb);
@@ -181,5 +174,14 @@ function I = segment1D(var, frame, saveFrame)
     if saveFrame
         imwrite(I,['../output/seg_' frame(end-6:end)]);
     end
+
+end
+
+function N = gauss(gmObj, X)
+% This function computes N(x|mu,sigma) for 1-D gaussian
+
+    mean = gmObj.mu;
+    sigma = gmObj.Sigma;
+    N = (1/sqrt(2*pi*sigma))*exp(-0.5*((X - mean).^2)/sigma);
 
 end

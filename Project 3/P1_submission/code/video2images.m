@@ -1,9 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This code converts a video into images at a given frame rate
+% This code converts a video into images and store the images in two sets,
+% namely Training Set and Testing Set.
 % 
 % Input:
 %    vidFilename --> Filename of the video to be converted into images
-%      frameRate --> Frame rate to be used to extract images
 %   outputFolder --> Location where the extracted images need to be saved
 % 
 % Submitted by: Ashwin Goyal (UID - 115526297)

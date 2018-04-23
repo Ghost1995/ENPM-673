@@ -1,10 +1,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code recovers the model parameters for the defined number of
-% gaussians
+% Gaussian
 % 
 % Input:
 %   data --> Data to be used to get the parameters
-%      N --> Number of Gaussians
+%      N --> Number of Gaussian
 % 
 % Output:
 %         gmObj --> Gaussian Mixture Object. It contains the mean (N x D), 
@@ -37,14 +37,12 @@ function [gmObj, isConverged] = EM(data, N)
         %%% Estimation step
         % Compute all probabilities
         prob = zeros(numSamples,N);
-        for i = 1:numSamples
-            for j = 1:N
-                prob(i,j) = mixtureCoeff(j)*gauss(data(i,:),mu(j,:),sigma(:,:,j));
-                if prob(i,j) == Inf || ~isempty(lastwarn)
-                    gmObj = gmdistribution;
-                    isConverged = false;
-                    return
-                end
+        for i = 1:N
+            prob(:,i) = mixtureCoeff(i)*gauss(data,mu(i,:),sigma(:,:,i));
+            if any(prob(:,i) == Inf) || ~isempty(lastwarn)
+                gmObj = [];
+                isConverged = false;
+                return
             end
         end
         % Compute posterior probability
@@ -80,11 +78,11 @@ function [gmObj, isConverged] = EM(data, N)
 end
 
 function N = gauss(x, mu, sigma)
-% This function computes N(x|mu,sigma)
+% This function computes N(x|mu,sigma) for N-D data
 
-    N = (1/(2*pi)^(size(x,2)/2))*(1/sqrt(det(sigma)))*exp(-0.5*((x - mu)/sigma)*(x - mu)');
-    if isnan(N)
-        N = Inf;
+    N = (1/(2*pi)^(size(x,2)/2))*(1/sqrt(det(sigma)))*exp(sum(-0.5*((x - mu)/sigma).*(x - mu),2));
+    if any(isnan(N))
+        N(isnan(N)) = Inf;
     end
-    
+
 end

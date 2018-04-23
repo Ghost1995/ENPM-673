@@ -112,7 +112,7 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         end
     end
     
-    % Compute average of histogram
+    % Compute average histogram
     greenHist = (greenHist/greenCount);
     greenHist = greenHist/mean(sum(greenHist));
     redHist = redHist/redCount;
@@ -120,7 +120,7 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
     yellowHist = yellowHist/yellowCount;
     yellowHist = yellowHist/mean(sum(yellowHist));
     
-    if strcmp(colorSpace,'RGB')
+    if colorMatch == 1
         % Save image of the histogram for green buoy
         figure('units','normalized','outerposition',[0 0 1 1])
         bar(0:255,greenHist(:,3),'b');
@@ -158,6 +158,8 @@ function averageHistogram(trainFolder, cropFolder, colorSpace)
         saveas(gcf,'..\output\Y_hist.jpg');
     end
     
+    greenDist = double(greenDist); redDist = double(redDist); yellowDist = double(yellowDist);
+    greenHist = double(greenHist); redHist = double(redHist); yellowHist = double(yellowHist);
     % Save the color distributions
     save(['..\output\colorDistributions_' colorSpace '.mat'],'greenDist','redDist','yellowDist')
     save(['..\output\colorHistograms_' colorSpace '.mat'],'greenHist','redHist','yellowHist')
