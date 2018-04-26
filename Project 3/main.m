@@ -36,15 +36,16 @@ load('.\ColorSeg\Output\Part0\colorDistributions_RGB.mat','greenDist','redDist',
 load('.\ColorSeg\Output\Part0\colorHistograms_RGB.mat','greenHist','redHist','yellowHist')
 
 % Get three 1-D Gaussian models
-gmObj_green = gmdistribution(mean(greenDist(:,2)),var(greenDist(:,2)));
+gmObj_green = gmdistribution(mean(greenDist(:,2)),std(greenDist(:,2)));
 gmObj_red = gmdistribution(mean(redDist(:,1)),var(redDist(:,1)));
 gmObj_yellow = gmdistribution(mean(mean(yellowDist(:,1:2),2)),var(mean(yellowDist(:,1:2),2)));
 gmObj = {gmObj_green; gmObj_red; gmObj_yellow};
+gmObj_green = gmdistribution(mean(greenDist(:,2)),var(greenDist(:,2)));
 % Plot the three gaussians
 figure('units','normalized','outerposition',[0 0 1 1])
 bar(0:255,greenHist(:,2),'g');
 hold on
-plot(0:255,gauss(gmObj{1},(0:255)'),'k')
+plot(0:255,gauss(gmObj_green,(0:255)'),'k')
 hold off
 title('1-D Gaussian to Detect Green Buoy')
 xlabel('Intensity')
@@ -52,7 +53,7 @@ ylabel('Probability')
 saveas(gcf,'.\ColorSeg\Output\Part0\G_gauss1D.jpg')
 bar(0:255,redHist(:,1),'r');
 hold on
-plot(0:255,gauss(gmObj{2},(0:255)'),'k')
+plot(0:255,gauss(gmObj_red,(0:255)'),'k')
 hold off
 title('1-D Gaussian to Detect Red Buoy')
 xlabel('Intensity')
@@ -60,7 +61,7 @@ ylabel('Probability')
 saveas(gcf,'.\ColorSeg\Output\Part0\R_gauss1D.jpg')
 bar(0:255,yellowHist(:,1),'r');
 hold on
-plot(0:255,gauss(gmObj{3},(0:255)'),'k')
+plot(0:255,gauss(gmObj_yellow,(0:255)'),'k')
 hold off
 title('1-D Gaussian to Detect Yellow Buoy')
 xlabel('Intensity')
