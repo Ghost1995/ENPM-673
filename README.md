@@ -1,4 +1,4 @@
-# Mid Term
+# ENPM-673-Mid-Term
 
 **Running the Code**
 
